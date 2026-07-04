@@ -15,9 +15,9 @@ echo "════════════════════════�
 echo "⏳ Waiting for PostgreSQL..."
 while ! python << END
 import sys
-import psycopg
+import psycopg2
 try:
-    conn = psycopg.connect("${DATABASE_URL}")
+    conn = psycopg2.connect("${DATABASE_URL}")
     conn.close()
 except Exception as e:
     print(f"Database not ready: {e}")
