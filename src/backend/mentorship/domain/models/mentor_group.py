@@ -44,7 +44,7 @@ class MentorGroup(models.Model):
 
     name = models.CharField(
         max_length=255,
-        help_text="Group name (e.g., 'Python Backend 
+        help_text="Group name (e.g., 'Python Backend - Group 1')"
     )
 
     planned_lessons_count = models.SmallIntegerField(
