@@ -1,0 +1,315 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* ─── Theme Variables ────────────────────────────────────────────────────────── */
+:root {
+  --font-size: 16px;
+
+  /* Surfaces */
+  --background:
+  --foreground:
+  --card:
+  --card-foreground:
+  --popover:
+  --popover-foreground:
+
+  /* Brand */
+  --primary:
+  --primary-foreground:
+
+  /* Surfaces 2 */
+  --secondary:
+  --secondary-foreground:
+  --muted:
+  --muted-foreground:
+
+  /* Accent (amber) */
+  --accent:
+  --accent-foreground:
+
+  /* Destructive */
+  --destructive:
+  --destructive-foreground:
+
+  /* Borders & inputs */
+  --border:           rgba(129, 140, 248, 0.12);
+  --input:            transparent;
+  --input-background:
+  --switch-background:
+  --ring:
+
+  /* Typography weights */
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+
+  /* Charts */
+  --chart-1:
+  --chart-2:
+  --chart-3:
+  --chart-4:
+  --chart-5:
+
+  /* Border radius */
+  --radius: 0.625rem;
+
+  /* Sidebar */
+  --sidebar:
+  --sidebar-foreground:
+  --sidebar-primary:
+  --sidebar-primary-foreground:
+  --sidebar-accent:
+  --sidebar-accent-foreground:
+  --sidebar-border:          rgba(129, 140, 248, 0.12);
+  --sidebar-ring:
+}
+
+/* ─── Tailwind theme mapping ──────────────────────────────────────────────────── */
+@theme inline {
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-input-background:       var(--input-background);
+  --color-switch-background:      var(--switch-background);
+  --color-ring:                   var(--ring);
+  --color-chart-1:                var(--chart-1);
+  --color-chart-2:                var(--chart-2);
+  --color-chart-3:                var(--chart-3);
+  --color-chart-4:                var(--chart-4);
+  --color-chart-5:                var(--chart-5);
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-sidebar:                   var(--sidebar);
+  --color-sidebar-foreground:        var(--sidebar-foreground);
+  --color-sidebar-primary:           var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:            var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border:            var(--sidebar-border);
+  --color-sidebar-ring:              var(--sidebar-ring);
+
+  /* Custom semantic colors */
+  --color-success:
+  --color-success-bg:    rgba(52, 211, 153, 0.1);
+  --color-warning:
+  --color-warning-bg:    rgba(251, 191, 36, 0.1);
+  --color-error:
+  --color-error-bg:      rgba(248, 113, 113, 0.1);
+  --color-info:
+  --color-info-bg:       rgba(129, 140, 248, 0.1);
+  --color-purple:
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-size: var(--font-size);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1rem; }
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  input, textarea, select {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  code, pre, kbd, samp {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--background); }
+  ::-webkit-scrollbar-thumb { background: rgba(129, 140, 248, 0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(129, 140, 248, 0.5); }
+
+  ::selection { background: rgba(129, 140, 248, 0.3); color: var(--foreground); }
+}
+
+/* ─── Utility classes ─────────────────────────────────────────────────────────── */
+@layer utilities {
+  .font-heading  { font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif; }
+  .font-body     { font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif; }
+  .font-mono     { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  .glow-primary  { box-shadow: 0 0 20px rgba(129, 140, 248, 0.15); }
+  .glow-success  { box-shadow: 0 0 20px rgba(52, 211, 153, 0.15); }
+  .glow-accent   { box-shadow: 0 0 20px rgba(251, 191, 36, 0.15); }
+
+  .glass {
+    background: rgba(12, 12, 24, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(129, 140, 248, 0.12);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg,
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .badge-mono {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(129,140,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(129,140,248,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .bg-glow-primary {
+    background: radial-gradient(circle at center, rgba(129,140,248,0.12) 0%, transparent 70%);
+  }
+  .bg-glow-accent {
+    background: radial-gradient(circle at center, rgba(251,191,36,0.08) 0%, transparent 70%);
+  }
+}
+
+/* ─── Component base styles ────────────────────────────────────────────────────── */
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-xl
+           hover:bg-primary/90 transition-all duration-150 disabled:opacity-50
+           disabled:cursor-not-allowed;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .btn-ghost {
+    @apply border border-border text-foreground font-medium px-5 py-2.5 rounded-xl
+           hover:border-primary/40 hover:bg-primary/5 transition-all duration-150;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .btn-danger {
+    @apply bg-destructive/10 border border-destructive/30 text-destructive font-semibold
+           px-5 py-2.5 rounded-xl hover:bg-destructive/20 transition-all duration-150;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .input {
+    @apply w-full px-4 py-2.5 bg-input-background border border-border rounded-xl
+           text-foreground placeholder:text-muted-foreground
+           focus:border-primary/50 focus:ring-1 focus:ring-primary/30 focus:outline-none
+           transition-colors duration-150;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.875rem;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold text-primary uppercase tracking-widest;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .filter-pills {
+    @apply flex items-center gap-1 p-1 bg-muted rounded-xl;
+  }
+  .filter-pill {
+    @apply px-3 py-1.5 text-xs font-semibold rounded-lg transition-all;
+    font-family: "DM Sans", sans-serif;
+  }
+  .filter-pill-active {
+    @apply bg-primary text-primary-foreground;
+  }
+  .filter-pill-inactive {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+
+  .stat-card {
+    @apply bg-card border border-border rounded-2xl p-5;
+  }
+  .stat-value {
+    @apply text-3xl font-extrabold text-foreground;
+    font-family: "Bricolage Grotesque", sans-serif;
+  }
+  .stat-label {
+    @apply text-xs text-muted-foreground;
+    font-family: "DM Sans", sans-serif;
+  }
+
+  .progress-track {
+    @apply h-1.5 bg-muted rounded-full overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+  }
+
+  .nav-item {
+    @apply w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left;
+    font-family: "DM Sans", sans-serif;
+  }
+  .nav-item-active {
+    @apply bg-primary/10 text-primary font-semibold;
+  }
+  .nav-item-inactive {
+    @apply text-muted-foreground hover:text-foreground hover:bg-muted;
+  }
+
+  .divider {
+    @apply border-t border-border;
+  }
+
+  .code-badge {
+    @apply px-2 py-0.5 rounded-md bg-muted text-xs;
+    font-family: "JetBrains Mono", monospace;
+    color: var(--primary);
+  }
+}

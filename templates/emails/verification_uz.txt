@@ -1,0 +1,24 @@
+==================================================
+                  LearnFlow
+            Kodi muvaffaqiyat sari
+==================================================
+
+Katta o'zgarishlarga tayyormisiz, {{ full_name }}?
+
+IT olamiga qadam qo'yganingiz bilan tabriklaymiz!
+LearnFlow platformasida zamonaviy kurslarni boshlash
+va hisobingizni faollashtirish uchun quyidagi havolaga o'ting:
+
+ Havolani bosing: {{ token_url }}
+
+--------------------------------------------------
+⚡ Eslatma: Havola xavfsizlik nuqtai nazaridan
+faqat 1 soat davomida amal qiladi.
+--------------------------------------------------
+
+Agar siz LearnFlow platformasida ro'yxatdan o'tmagan
+bo'lsangiz, shunchaki bu xabarni e'tiborsiz qoldiring.
+Akkauntingiz xavfsiz ostida.
+
+Kelajakni biz bilan quring.
+© 2026 LearnFlow Academy. Barcha huquqlar himoyalangan.

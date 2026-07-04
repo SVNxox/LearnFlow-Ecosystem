@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnFlow — UserProgress Domain Architecture Review v2</title>
+<style>
+  :root {
+    --accent:
+    --teal:
+    --coral:
+    --amber:
+    --sky:
+    --gray:
+    --green:
+    --red:
+    --orange:
+    --text:
+    --border:
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.7; color:var(--text); background:var(--bg-page); }
+  .layout { display:flex; min-height:100vh; }
+
+  nav { width:270px; min-width:270px; background:var(--bg); border-right:1px solid var(--border); padding:24px 0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  nav .logo { padding:0 20px 16px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  nav .logo h1 { font-size:14px; font-weight:700; color:var(--red); line-height:1.3; }
+  nav .logo p  { font-size:11px; color:var(--text-muted); margin-top:3px; }
+  nav a { display:block; padding:6px 20px; font-size:12.5px; color:var(--text-muted); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; }
+  nav a:hover { color:var(--accent); background:var(--accent-light); border-left-color:var(--accent); }
+  nav .section-label { padding:13px 20px 3px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); }
+  nav a.sub { padding-left:32px; font-size:12px; }
+
+  main { flex:1; padding:48px 56px; max-width:1060px; }
+  section { margin-bottom:72px; }
+
+  h2 { font-size:25px; font-weight:700; color:var(--text); margin-bottom:8px; padding-bottom:12px; border-bottom:2px solid var(--accent-light); }
+  h2 .tag { display:inline-block; font-size:11px; font-weight:500; background:var(--accent-light); color:var(--accent); padding:2px 8px; border-radius:4px; margin-left:10px; vertical-align:middle; }
+  h3 { font-size:18px; font-weight:700; color:var(--text); margin:32px 0 12px; }
+  h4 { font-size:14px; font-weight:700; color:var(--text); margin:14px 0 6px; }
+  p  { margin-bottom:12px; color:var(--text-muted); font-size:14px; }
+  pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:14px 18px; font-family:'SF Mono','Fira Code',monospace; font-size:12px; line-height:1.7; overflow-x:auto; margin:10px 0; color:var(--text); }
+  code { background:var(--code-bg); font-family:'SF Mono','Fira Code',monospace; font-size:12px; padding:1px 5px; border-radius:3px; color:var(--accent); }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+  th { background:var(--gray-light); font-weight:700; text-align:left; padding:9px 13px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  td { padding:8px 13px; border-bottom:1px solid var(--border); vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:none; }
+
+  /* Severity badges */
+  .sev { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:4px; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .sev-critical { background:var(--red-light);    color:var(--red); }
+  .sev-high     { background:var(--orange-light);  color:var(--orange); }
+  .sev-medium   { background:var(--amber-light);   color:var(--amber); }
+  .sev-low      { background:var(--teal-light);    color:var(--teal); }
+
+  /* Finding cards */
+  .finding { background:var(--bg); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; overflow:hidden; }
+  .finding-header { padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--border); }
+  .finding-header.critical { background:var(--red-light);    border-bottom-color:
+  .finding-header.high     { background:var(--orange-light);  border-bottom-color:
+  .finding-header.medium   { background:var(--amber-light);   border-bottom-color:
+  .finding-header.low      { background:var(--teal-light);    border-bottom-color:
+  .finding-id   { font-family:'SF Mono',monospace; font-size:11px; font-weight:700; color:var(--text-muted); min-width:48px; }
+  .finding-title { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+  .finding-body { padding:16px 18px; }
+  .finding-body h4 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin:14px 0 5px; }
+  .finding-body h4:first-child { margin-top:0; }
+  .finding-body p  { font-size:13.5px; margin-bottom:8px; }
+  .finding-body p:last-child { margin-bottom:0; }
+
+  /* Before/After blocks */
+  .diff-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0; }
+  .diff-block { border-radius:8px; overflow:hidden; }
+  .diff-block .diff-label { padding:6px 12px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; }
+  .diff-block.before .diff-label { background:
+  .diff-block.after  .diff-label { background:var(--teal-light); color:var(--teal); }
+  .diff-block pre { margin:0; border-radius:0; border:none; border-top:1px solid var(--border); font-size:11.5px; }
+  .diff-block.before pre { background:
+  .diff-block.after  pre { background:
+
+  /* Callouts */
+  .callout { border-left:3px solid var(--accent); background:var(--accent-light); border-radius:0 8px 8px 0; padding:13px 16px; margin:14px 0; font-size:13.5px; color:var(--text); }
+  .callout.warning { border-color:var(--amber); background:var(--amber-light); }
+  .callout.success { border-color:var(--teal);  background:var(--teal-light); }
+  .callout.sky     { border-color:var(--sky);   background:var(--sky-light); }
+  .callout.danger  { border-color:var(--red);   background:var(--red-light); }
+
+  /* Summary table */
+  .summary-table td:first-child { font-family:'SF Mono',monospace; font-size:12px; font-weight:600; }
+  .summary-table td:nth-child(2){ font-size:13px; }
+
+  /* Executive verdict */
+  .verdict-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:20px 0; }
+  .verdict-cell { padding:16px 18px; border-right:1px solid var(--border); }
+  .verdict-cell:last-child { border-right:none; }
+  .verdict-num  { font-size:32px; font-weight:800; font-family:'SF Mono',monospace; line-height:1; }
+  .verdict-label { font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-top:4px; }
+
+  /* Recommendation blocks */
+  .rec-block { background:var(--teal-light); border:1px solid
+  .rec-block h4 { color:var(--teal); margin-top:0; font-size:13px; }
+  .rec-block p  { font-size:13px; margin-bottom:0; }
+
+  /* Section header with area label */
+  .area-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .area-num { background:var(--accent); color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+  .area-num.red    { background:var(--red); }
+  .area-num.amber  { background:var(--amber); }
+  .area-num.teal   { background:var(--teal); }
+  .area-num.sky    { background:var(--sky); }
+  .area-num.coral  { background:var(--coral); }
+  .area-num.gray   { background:var(--gray); }
+
+  /* Change table */
+  .change-table td:nth-child(3) { font-size:12.5px; }
+  .change-added   { background:
+  .change-modified{ background:
+  .change-removed { background:
+
+  hr { border:none; border-top:1px solid var(--border); margin:24px 0; }
+  @media (max-width:1100px) { nav { display:none; } main { padding:24px 20px; } }
+  @media (max-width:700px)  { .diff-grid { grid-template-columns:1fr; } .verdict-bar { grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav>
+  <div class="logo">
+    <h1>Architecture Review<br>UserProgress Domain v2</h1>
+    <p>Staff Engineer · LearnFlow</p>
+  </div>
+  <div class="section-label">Overview</div>
+  <a href="
+  <a href="
+  <div class="section-label">Area 1 · Counters</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Area 2 · Percentage</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Area 3 · Continue Learning</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Area 4 · Online / Offline</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Area 5 · Content Tracking</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Additional</div>
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Resolution</div>
+  <a href="
+  <a href="
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<!-- ═══ EXECUTIVE SUMMARY ═══ -->
+<section id="executive">
+  <h2>Executive Summary <span class="tag">STAFF REVIEW</span></h2>
+
+  <p>The v1 architecture is structurally sound — the four-table hierarchy, snapshot strategy, and synchronous cascade are the right foundations. However, there are <strong>20 issues</strong> ranging from correctness bugs that will surface on day one to scalability problems that only appear under load. None require a full redesign, but several require non-trivial algorithm changes before implementation begins.</p>
+
+  <div class="verdict-bar">
+    <div class="verdict-cell" style="background:var(--red-light)">
+      <div class="verdict-num" style="color:var(--red)">4</div>
+      <div class="verdict-label">🔴 Critical — data corruption or permanent stuck states</div>
+    </div>
+    <div class="verdict-cell" style="background:var(--orange-light)">
+      <div class="verdict-num" style="color:var(--orange)">7</div>
+      <div class="verdict-label">🟠 High — breaks at scale or for offline students</div>
+    </div>
+    <div class="verdict-cell" style="background:var(--amber-light)">
+      <div class="verdict-num" style="color:var(--amber)">6</div>
+      <div class="verdict-label">🟡 Medium — edge cases that produce wrong behaviour</div>
+    </div>
+    <div class="verdict-cell" style="background:var(--teal-light)">
+      <div class="verdict-num" style="color:var(--teal)">3</div>
+      <div class="verdict-label">🟢 Low — improvements worth making before ship</div>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>Do not implement v1 as written.</strong> F2 (lost counter increments) and F18 (bulk attendance race condition) will cause students to get permanently stuck in <code>in_progress</code> with no recovery path except a manual admin override. F8 (ordering bug) will send students to the wrong next lesson on every sequential course. These three alone block implementation.
+  </div>
+
+  <div class="callout success">
+    <strong>What v1 gets right:</strong> The four-table structure, snapshot-at-enrollment strategy, the synchronous cascade pattern, <code>completion_source</code> as the online/offline differentiator, and post-commit event dispatch are all correct decisions worth keeping. The review below is about <em>fixing</em> the implementation detail, not replacing the foundation.
+  </div>
+</section>
+
+<!-- ═══ ISSUE INDEX ═══ -->
+<section id="issue-index">
+  <h2>Issue Index <span class="tag">20 FINDINGS</span></h2>
+  <table class="summary-table">
+    <tr><th>ID</th><th>Finding</th><th>Area</th><th>Severity</th></tr>
+    <tr><td>F1</td><td>O(n) DB fan-out when content is deleted — synchronous event handler blocks</td><td>Counters</td><td><span class="sev sev-critical">Critical</span></td></tr>
+    <tr><td>F2</td><td>Race condition on <code>viewed_required_count</code> — lost increments cause permanent stuck state</td><td>Counters</td><td><span class="sev sev-critical">Critical</span></td></tr>
+    <tr><td>F3</td><td>Counter drift on already-completed lessons — inconsistent state after content addition</td><td>Counters</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F4</td><td>No handler for <code>LessonContentAdded</code> — new required content never increments snapshots</td><td>Counters</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F5</td><td><code>CHECK viewed ≤ required + 1</code> is wrong — masks real drift, won't catch multi-step errors</td><td>Counters</td><td><span class="sev sev-low">Low</span></td></tr>
+    <tr><td>F6</td><td>Module-granularity percentage is misleading — equal weight to a 1-lesson and a 20-lesson module</td><td>Percentage</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F7</td><td><code>assessment_pending</code> shows 0% credit for completed lessons — discourages students</td><td>Percentage</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F8</td><td>Cross-module <code>lesson_order</code> comparison has no <code>module_order</code> — sends students to wrong lesson</td><td>Continue</td><td><span class="sev sev-critical">Critical</span></td></tr>
+    <tr><td>F9</td><td><code>in_progress</code> vs <code>unlocked</code> priority is inverted — abandons mid-lesson student</td><td>Continue</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F10</td><td><code>assessment_pending</code> returns <code>next_lesson: null</code> with no action signal — dead-end UX</td><td>Continue</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F11</td><td>Non-sequential "continue" returns first-by-order instead of last-active</td><td>Continue</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F12</td><td>Attendance bypasses homework gate — students can complete lessons without submitting work</td><td>Offline</td><td><span class="sev sev-high">High</span></td></tr>
+    <tr><td>F13</td><td>No <code>AttendanceRevoked</code> path — mentor mistakes are permanent</td><td>Offline</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F14</td><td>Delivery format change mid-course leaves completion logic using stale context</td><td>Offline</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F15</td><td>One API call marks a 2-hour video as "viewed" — no watch threshold enforced</td><td>Content</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F16</td><td><code>is_required</code> flag change on existing content is not handled — counters diverge</td><td>Content</td><td><span class="sev sev-medium">Medium</span></td></tr>
+    <tr><td>F17</td><td><code>_unlock_next_module</code> never unlocks the first lesson of the next module</td><td>Content</td><td><span class="sev sev-critical">Critical</span></td></tr>
+    <tr><td>F18</td><td>Bulk offline attendance race condition — concurrent <code>_check_module_completion</code> calls without row locking</td><td>Additional</td><td><span class="sev sev-critical">Critical</span></td></tr>
+    <tr><td>F19</td><td>Re-enroll after drop resets progress to zero — product decision not made explicit</td><td>Additional</td><td><span class="sev sev-low">Low</span></td></tr>
+    <tr><td>F20</td><td>Admin override has no audit trail in the schema — <code>reason</code> is API-only and discarded</td><td>Additional</td><td><span class="sev sev-low">Low</span></td></tr>
+  </table>
+</section>
+
+<!-- ═══ AREA 1: COUNTERS ═══ -->
+<section id="area1">
+  <div class="area-header">
+    <div class="area-num red">1</div>
+    <h2 style="border:none; padding:0; margin:0;">Snapshot Counter Scalability</h2>
+  </div>
+
+  <div class="finding" id="F1">
+    <div class="finding-header critical">
+      <span class="finding-id">F1</span>
+      <span class="finding-title">O(n) synchronous fan-out when content is deleted</span>
+      <span class="sev sev-critical">Critical</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The <code>handle_content_deleted</code> handler updates <code>required_content_count</code> and <code>viewed_required_count</code> on every <code>LessonProgress</code> row for every enrolled student in the course. It then conditionally calls <code>_check_lesson_completion</code> for each affected row. All of this runs inside the same synchronous event handler — blocking the request thread of whichever staff member deleted the content item.</p>
+      <h4>Impact</h4>
+      <p>A popular course with 10,000 active enrollments triggers 10,000 <code>LessonProgress</code> reads, up to 10,000 <code>LessonContentView</code> existence checks, up to 10,000 counter writes, and up to 10,000 <code>_check_lesson_completion</code> calls — all in one synchronous transaction. This will hit a 30-second DB timeout at a few hundred enrollments. The same problem exists for <code>LessonPublished</code> (adds a new row per enrolled student) and <code>ModulePublished</code> (updates all module progress rows).</p>
+      <h4>Recommendation</h4>
+      <p>Fan-out operations that touch N rows where N grows with enrollment count must be background tasks, not inline event handlers. The event handler enqueues a task; the task processes rows in batches of 500 with a short delay between batches to avoid DB saturation.</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">v1 — synchronous, will timeout</div>
+          <pre>def handle_content_deleted(lesson_id, content_id):
+    affected = LessonProgress.filter(lesson_id=lesson_id)
+    for lp in affected:
+        lp.required_content_count -= 1
+        if viewed(lp, content_id):
+            lp.viewed_required_count -= 1
+        lp.save()
+        _check_lesson_completion(lp)
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — enqueue background task</div>
+          <pre>def handle_content_deleted(lesson_id, content_id, was_required):
+    if not was_required:
+        return
+
+    tasks.fan_out_content_deletion.delay(
+        lesson_id=lesson_id,
+        content_id=content_id,
+    )
+
+
+def fan_out_content_deletion(lesson_id, content_id):
+    qs = LessonProgress.filter(lesson_id=lesson_id, status__ne='completed')
+    for batch in chunked(qs, 500):
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding" id="F2">
+    <div class="finding-header critical">
+      <span class="finding-id">F2</span>
+      <span class="finding-title">Race condition on <code>viewed_required_count</code> — lost increments cause permanent stuck state</span>
+      <span class="sev sev-critical">Critical</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The <code>record_content_view</code> algorithm increments <code>viewed_required_count</code> with a read-modify-write pattern. Two concurrent requests (e.g., a mobile app syncing two offline views simultaneously, or a student with two tabs open) will both read the same current value and both write the same incremented value — losing one increment entirely.</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">The race — thread B's increment is lost</div>
+          <pre>T=0  A reads viewed_required_count = 1
+T=0  B reads viewed_required_count = 1
+T=1  A writes 2  ← correct
+T=1  B writes 2  ← should be 3, is 2
+
+Result: viewed=2, required=3
+        content gate never passes.
+        Student is permanently stuck.</pre>
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — use F() expressions + created flag</div>
+          <pre>view_record, created = LessonContentView.get_or_create(
+    enrollment_id=enrollment_id,
+    content_id=content_id,
+    defaults={...}
+)
+
+if created and view_record.is_required:
+
+    LessonProgress.filter(enrollment_id=..., lesson_id=...).update(
+        viewed_required_count=F('viewed_required_count') + 1
+    )
+
+    lp.refresh_from_db()</pre>
+        </div>
+      </div>
+
+      <h4>Why the UNIQUE constraint alone is not enough</h4>
+      <p>The UNIQUE index on <code>(enrollment_id, content_id)</code> prevents duplicate rows but does not protect the counter. The increment must be atomic at the DB level. <code>F()</code> expressions translate to <code>UPDATE ... SET col = col + 1</code> — a single atomic SQL statement. All counter increments and decrements throughout the entire domain must use this pattern.</p>
+
+      <div class="rec-block">
+        <h4>Rule for all counters in this domain</h4>
+        <p>Every increment or decrement of <code>viewed_required_count</code>, <code>completed_lessons_count</code>, and <code>completed_modules_count</code> must use Django's <code>F()</code> expression. The only read of these counters allowed in the completion check must be a <code>refresh_from_db()</code> call immediately after the atomic update — not a stale in-memory value.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding" id="F3">
+    <div class="finding-header high">
+      <span class="finding-id">F3</span>
+      <span class="finding-title">Counter drift on already-completed lessons</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>When a staff member adds a new required content item to a lesson where some students have already reached <code>status=completed</code>, the fan-out handler increments <code>required_content_count</code> on those completed rows. Now <code>viewed_required_count (3) < required_content_count (4)</code> on a row with <code>status=completed</code>. The <code>CHECK(completed_at IS NULL OR status = 'completed')</code> constraint prevents reverting status, so the row enters a permanently inconsistent state: complete but counters say otherwise.</p>
+      <h4>Recommendation</h4>
+      <p>Fan-out handlers for counter updates must filter out rows where <code>status = 'completed'</code>. Completed lessons are frozen — they do not participate in counter updates regardless of what the Learning Domain changes. A completed lesson stays completed. This is the correct product behaviour: retroactive content addition does not un-complete a lesson a student has already finished.</p>
+
+      <pre>-- v2: fan-out targets only non-completed rows
+UPDATE progress_lessonprogress
+   SET required_content_count = required_content_count + 1
+ WHERE lesson_id = $lesson_id
+   AND status != 'completed';   -- ← this filter is the entire fix</pre>
+    </div>
+  </div>
+
+  <div class="finding" id="F4">
+    <div class="finding-header high">
+      <span class="finding-id">F4</span>
+      <span class="finding-title">No handler for <code>LessonContentAdded</code> — new required content invisible to counters</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The v1 document defines a handler for <code>LessonContentDeleted</code> but not for <code>LessonContentAdded</code>. The Learning Domain's <code>LessonContentService.add_content()</code> does not emit a corresponding event that UserProgress listens to. When a staff member adds a new required content item to a published lesson, all enrolled students' <code>required_content_count</code> snapshots become stale — they remain at the old value. Students could complete a lesson without viewing the new required content.</p>
+      <h4>Recommendation</h4>
+      <p>Learning Domain must emit <code>LessonContentAdded(lesson_id, content_id, is_required)</code>. UserProgress must handle it with the same fan-out background task pattern as F1. The same <code>status != 'completed'</code> filter from F3 applies.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F5">
+    <div class="finding-header low">
+      <span class="finding-id">F5</span>
+      <span class="finding-title"><code>CHECK viewed ≤ required + 1</code> is wrong — masks bugs</span>
+      <span class="sev sev-low">Low</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The constraint <code>CHECK(viewed_required_count &lt;= required_content_count + 1)</code> was documented as "tolerance for concurrent updates." This is the wrong way to handle concurrency. Tolerating a counter that is one ahead hides genuine bugs and will not catch a counter that's 3 or 5 ahead (which can happen with F4 and the fan-out race). Once F2's <code>F()</code> expressions are applied, concurrent increments are atomic and no tolerance is needed.</p>
+      <h4>Recommendation</h4>
+      <p>Remove the <code>+1</code> tolerance. The correct constraint is <code>CHECK(viewed_required_count &lt;= required_content_count)</code>. With atomic <code>F()</code> increments and the <code>status != 'completed'</code> filter from F3, this constraint will never be violated in normal operation. Any violation indicates a real bug that should be surfaced, not masked.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ AREA 2: PERCENTAGE ═══ -->
+<section id="area2">
+  <div class="area-header">
+    <div class="area-num amber">2</div>
+    <h2 style="border:none; padding:0; margin:0;">Progress Percentage Calculation</h2>
+  </div>
+
+  <div class="finding" id="F6">
+    <div class="finding-header high">
+      <span class="finding-id">F6</span>
+      <span class="finding-title">Module-granularity percentage is misleading — equal weight regardless of lesson count</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The current formula is <code>completion_percentage = completed_modules_count / total_modules_count</code>. This gives equal weight to every module regardless of how many lessons it contains. A course with modules of sizes [20 lessons, 1 lesson, 1 lesson] would show a student as <strong>67% complete</strong> after finishing modules 2 and 3 — when they've only completed 2 of 22 lessons.</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">v1 — module weight: always 1/N</div>
+          <pre>Module 1: 20 lessons  → weight 33%
+Module 2:  1 lesson   → weight 33%
+Module 3:  1 lesson   → weight 33%
+
+Student finishes M2 + M3 → 67%
+But has done 2 / 22 actual lessons.
+</pre>
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — lesson-based: weight by lesson count</div>
+          <pre>total_lessons   = SUM(mp.total_lessons_count)
+                = 20 + 1 + 1 = 22
+
+completed_lessons = SUM(mp.completed_lessons_count)
+
+percentage = completed_lessons / total_lessons
+           = 2 / 22 = 9%   ← accurate</pre>
+        </div>
+      </div>
+
+      <h4>Schema implication</h4>
+      <p>Add <code>total_lessons_count</code> and <code>completed_lessons_count</code> to <code>CourseProgress</code>. These are maintained the same way as on <code>ModuleProgress</code> — incremented via the cascade. Alternatively, compute on-demand by <code>SUM</code> over <code>ModuleProgress</code> rows. For the monolith with proper indexing, the SUM approach is acceptable and avoids adding two more counters to maintain. Prefer the SUM approach initially — add the denormalized counters only if profiling shows the query is slow at the dashboard scale.</p>
+
+      <div class="rec-block">
+        <h4>Recommended implementation for <code>get_completion_percentage</code></h4>
+        <p>Query: <code>SELECT SUM(completed_lessons_count), SUM(total_lessons_count) FROM progress_moduleprogress WHERE enrollment_id = X AND NOT is_stale</code>. Single indexed query per enrollment. Add it to <code>CourseProgressSelector.get_completion_percentage()</code>. Cache the result on the <code>CourseProgress</code> row with a <code>cached_percentage</code> INT field (updated on each lesson completion). Dashboard reads the cached field; the SUM query recalculates it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding" id="F7">
+    <div class="finding-header medium">
+      <span class="finding-id">F7</span>
+      <span class="finding-title"><code>assessment_pending</code> shows 0% credit for lesson work inside the module</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>A module in <code>assessment_pending</code> has <code>completed_lessons_count == total_lessons_count</code> but <code>ModuleProgress.status != 'completed'</code>. With the v1 percentage formula, the entire module contributes 0 to <code>completed_modules_count</code>. A student who finishes all 10 lessons of an 11-lesson course and is waiting to take the assessment sees themselves at exactly the same percentage as when they started the last module. This is a psychological problem — it demotivates students and makes the progress bar feel broken.</p>
+      <h4>Recommendation</h4>
+      <p>The lesson-based percentage from F6 naturally resolves this — lessons inside an <code>assessment_pending</code> module <em>are</em> counted as completed in <code>completed_lessons_count</code>. The percentage rises as lessons complete, regardless of module assessment status. No additional change needed beyond fixing F6.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ AREA 3: CONTINUE LEARNING ═══ -->
+<section id="area3">
+  <div class="area-header">
+    <div class="area-num coral">3</div>
+    <h2 style="border:none; padding:0; margin:0;">Continue Learning Strategy</h2>
+  </div>
+
+  <div class="finding" id="F8">
+    <div class="finding-header critical">
+      <span class="finding-id">F8</span>
+      <span class="finding-title">Cross-module <code>lesson_order</code> comparison missing <code>module_order</code> — wrong lesson returned</span>
+      <span class="sev sev-critical">Critical</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The v1 spec for <code>get_next_lesson</code> returns the LessonProgress with <code>status=unlocked</code> and the lowest <code>lesson_order</code>. But <code>lesson_order</code> is <strong>scoped per module</strong> — every module starts its own ordering from 1. Comparing raw <code>lesson_order</code> across modules is meaningless.</p>
+
+      <pre>Module 1 (module_order=1): lessons with lesson_order = 1, 2, 3, 4, 5
+Module 2 (module_order=2): lessons with lesson_order = 1, 2, 3
+
+Student just finished Module 1, Lesson 5.
+Module 2, Lesson 1 (lesson_order=1) is now unlocked.
+Module 1, Lesson 5 is now complete.
+
+v1 query: ORDER BY lesson_order ASC → returns Module 1 Lesson 1 (order=1, status=completed)
+          or Module 2 Lesson 1 (also order=1)... undefined tie-break.
+
+Correct query: ORDER BY module_order ASC, lesson_order ASC</pre>
+
+      <h4>Recommendation</h4>
+      <p>The query for <code>get_next_lesson</code> must always include <code>module_order</code> as the primary sort key. This requires <code>module_order</code> to be stored on <code>LessonProgress</code> (it already is, as a snapshot field) and the index must cover <code>(enrollment_id, module_order, lesson_order)</code>.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F9">
+    <div class="finding-header high">
+      <span class="finding-id">F9</span>
+      <span class="finding-title"><code>in_progress</code> vs <code>unlocked</code> priority is inverted — mid-lesson student is abandoned</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The v1 spec says: return the first <code>unlocked</code> lesson, <em>fall back to</em> first <code>in_progress</code> if none. This is backwards. <code>unlocked</code> means the student hasn't started yet. <code>in_progress</code> means the student opened the lesson, watched some content, and left. "Continue" should resume the interrupted lesson, not advance to the next one.</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">v1 — wrong priority</div>
+          <pre>1. First unlocked lesson  ← sends to NEW lesson
+2. Fallback: in_progress  ← abandons the student
+                              who is mid-way through</pre>
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — correct priority</div>
+          <pre>1. Most recent in_progress lesson  ← resume
+   (ordered by started_at DESC)
+2. First unlocked lesson           ← continue
+   (ordered by module_order, lesson_order)
+3. None → course complete or pending assessment</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding" id="F10">
+    <div class="finding-header high">
+      <span class="finding-id">F10</span>
+      <span class="finding-title"><code>assessment_pending</code> returns <code>next_lesson: null</code> — dead-end UX</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>When a module is in <code>assessment_pending</code>, there are no <code>unlocked</code> lessons in the course (the first lesson of the next module is still <code>locked</code>, waiting for the current module to complete). The <code>get_next_lesson</code> query returns nothing. The API currently returns <code>next_lesson: null</code>. The student sees a dead "Continue" button with no explanation — they don't know they need to take an assessment.</p>
+      <h4>Recommendation</h4>
+      <p>Add a <code>next_action</code> field to the response. When <code>get_next_lesson</code> finds no lesson but a module is in <code>assessment_pending</code>, return a structured signal the frontend can act on.</p>
+
+      <pre>-- v2 response shape for get_next_lesson
+{
+  "next_lesson": null,
+  "next_action": {
+    "type": "take_module_assessment",   // or "course_complete", or "lesson_unlocked"
+    "module_id": "uuid",
+    "module_title": "Python OOP",
+    "assessment_url": "/assessments/modules/uuid/"  // from Assessment domain
+  }
+}</pre>
+
+      <p>The <code>CourseProgressSelector.get_next_lesson</code> method should be renamed to <code>get_next_action</code> and return a typed discriminated union: <code>{ type: "lesson", lesson_id }</code> | <code>{ type: "assessment", module_id }</code> | <code>{ type: "complete" }</code> | <code>{ type: "not_started" }</code>.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F11">
+    <div class="finding-header medium">
+      <span class="finding-id">F11</span>
+      <span class="finding-title">Non-sequential "continue" returns first-by-order instead of last-active</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>For non-sequential courses, all lessons start as <code>unlocked</code>. The current <code>get_next_lesson</code> implementation ordered by <code>(module_order, lesson_order)</code> would return Lesson 1 of Module 1 every time — the student's last-visited lesson is ignored entirely.</p>
+      <h4>Recommendation</h4>
+      <p>Non-sequential courses should use a different "continue" strategy: return the most recently active lesson, whether it is <code>in_progress</code> or the most recently accessed <code>unlocked</code> lesson. Use <code>LessonProgress.started_at DESC</code> as the sort for non-sequential. The selector must branch on <code>Course.is_sequential</code> (read via Learning Domain selector or cached on CourseProgress).</p>
+
+      <pre>-- Add is_sequential snapshot to CourseProgress for hot-path use
+ALTER TABLE progress_courseprogress
+    ADD COLUMN is_sequential BOOLEAN NOT NULL DEFAULT TRUE;</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ AREA 4: ONLINE/OFFLINE ═══ -->
+<section id="area4">
+  <div class="area-header">
+    <div class="area-num sky">4</div>
+    <h2 style="border:none; padding:0; margin:0;">Online vs Offline Completion Logic</h2>
+  </div>
+
+  <div class="finding" id="F12">
+    <div class="finding-header high">
+      <span class="finding-id">F12</span>
+      <span class="finding-title">Attendance bypasses homework gate — offline students skip required work</span>
+      <span class="sev sev-high">High</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The v1 design states attendance bypasses <em>both</em> content and homework gates. But homework is pedagogically different from watching a video. Content can be covered in a classroom session — the mentor's attendance mark is a reasonable proxy for "the student engaged with the material." Homework submission is a separate act of work product — attending a session does not produce the homework.</p>
+      <h4>Design question that was skipped</h4>
+      <p>The v1 architecture note says "for offline, attendance IS completion." This was stated as a resolved decision but it conflates two distinct concerns: <em>did the student attend the session?</em> (the attendance mark answers this) vs <em>did the student produce the required deliverable?</em> (only homework submission answers this).</p>
+      <h4>Recommendation</h4>
+      <p>Attendance should bypass the <strong>content gate only</strong>. The homework gate should apply regardless of delivery format. This is a product decision that must be confirmed, but the architecture should be built to support it. The implementation change is minimal:</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">v1 — both gates bypassed</div>
+          <pre>def handle_attendance_marked(...):
+    lp.status           = 'completed'
+    lp.completion_source = 'mentor_attendance'
+
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — content gate bypassed, homework gate still applied</div>
+          <pre>def handle_attendance_marked(...):
+
+    lp.viewed_required_count = lp.required_content_count
+    lp.completion_source     = 'mentor_attendance'
+
+    _check_lesson_completion(enrollment_id, lesson_id)</pre>
+        </div>
+      </div>
+
+      <p>This means an offline student whose lesson has required homework still needs to submit it after attending the session. The content gate is passed by the attendance mark; the homework gate still requires a submission event from the Submissions Domain.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F13">
+    <div class="finding-header medium">
+      <span class="finding-id">F13</span>
+      <span class="finding-title">No <code>AttendanceRevoked</code> path — mentor mistakes are permanent</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>Lesson completion is designed as a terminal state. But offline attendance can be marked in error — wrong student, wrong session, typo. Since <code>completion_source = 'mentor_attendance'</code> locks the lesson as completed with no reversal path, a mentor mistake permanently advances a student past lessons they haven't actually attended.</p>
+      <h4>Recommendation</h4>
+      <p>Two options. <strong>Option A (simple):</strong> Add an admin-only <code>POST /progress/enrollments/{id}/lessons/{id}/reset/</code> endpoint backed by a hard reset in <code>LessonProgressService</code> — this is an escape hatch, not a normal flow. Require dual-staff approval in the application layer. <strong>Option B (strict):</strong> Keep completion terminal but require the Mentorship Domain to emit a <code>CourseEnrollmentService.complete_enrollment()</code> reversal — complex and probably overkill. Option A is sufficient for v1.</p>
+
+      <p>Additionally, the <code>AttendanceMarked</code> event must carry an <code>idempotency_key</code> (session_id + enrollment_id) to prevent duplicate processing if the event is delivered twice.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F14">
+    <div class="finding-header medium">
+      <span class="finding-id">F14</span>
+      <span class="finding-title">Delivery format change mid-course — completion logic reads stale context</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>An admin can change <code>CourseEnrollment.delivery_format</code> from <code>offline</code> to <code>online</code> mid-course. But <code>LessonProgressService.record_content_view</code> determines which gates to apply by reading <code>enrollment.delivery_format</code> at call time. This is correct — it uses the live value. However, lessons already completed as <code>completion_source = 'mentor_attendance'</code> remain completed under the offline model. Future lessons now use online gate logic. The student is in a mixed state that is actually fine for progress tracking, but the completion percentage and analytics will show a mixed <code>completion_source</code> within one enrollment.</p>
+      <h4>Recommendation</h4>
+      <p>This is acceptable behaviour — document it explicitly. Emit an <code>EnrollmentDeliveryFormatChanged</code> event that UserProgress listens to. When received, update a <code>delivery_format</code> snapshot field on <code>CourseProgress</code>. This snapshot is then available to <code>LessonProgressService</code> without requiring a cross-domain lookup on every content view call.</p>
+
+      <pre>-- Add delivery_format snapshot to CourseProgress
+ALTER TABLE progress_courseprogress
+    ADD COLUMN delivery_format VARCHAR(10) NOT NULL DEFAULT 'online';
+-- Updated via EnrollmentDeliveryFormatChanged event handler</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ AREA 5: CONTENT TRACKING ═══ -->
+<section id="area5">
+  <div class="area-header">
+    <div class="area-num teal">5</div>
+    <h2 style="border:none; padding:0; margin:0;">Content Progress Tracking Model</h2>
+  </div>
+
+  <div class="finding" id="F15">
+    <div class="finding-header medium">
+      <span class="finding-id">F15</span>
+      <span class="finding-title">One API call marks a 2-hour video as "viewed" — no watch threshold</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p><code>POST /progress/lessons/{id}/content/{id}/view/</code> records a view and creates the <code>LessonContentView</code> row. For <code>type=text</code> or <code>type=pdf</code>, a single "opened the page" signal is a reasonable proxy for consumption. For <code>type=video</code> or <code>type=recording</code>, this means a student who opens the video player and immediately closes it has "viewed" a 4-hour lecture and passes the content gate.</p>
+      <h4>Impact</h4>
+      <p>For now, this is a product decision as much as a technical one. The architecture should support enforcement without requiring it. The current model stores <code>last_position_seconds</code> but never uses it for gate evaluation.</p>
+      <h4>Recommendation</h4>
+      <p>Add a <code>minimum_watch_ratio</code> field (DECIMAL 0–1, default 0.0) to <code>LessonContent</code> in the Learning Domain. The UserProgress domain stores <code>total_duration_seconds</code> on <code>LessonContentView</code> (snapshotted from LessonContent at view time) and uses it with <code>last_position_seconds</code> to evaluate whether the watch threshold is met. The content gate check becomes:</p>
+
+      <pre>-- Content gate check for a single content item (video)
+def is_content_item_complete(view_record):
+    if content.type not in ('video', 'recording'):
+        return view_record is not None
+
+    if content.minimum_watch_ratio == 0:
+        return view_record is not None
+
+    if view_record is None:
+        return False
+
+    watch_ratio = view_record.last_position_seconds / view_record.total_duration_seconds
+    return watch_ratio >= content.minimum_watch_ratio</pre>
+
+      <p>The <code>viewed_required_count</code> counter is then incremented only when the threshold is met, not on first open. This is a non-breaking change — defaulting <code>minimum_watch_ratio = 0</code> preserves existing behaviour.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F16">
+    <div class="finding-header medium">
+      <span class="finding-id">F16</span>
+      <span class="finding-title"><code>is_required</code> flag change on existing content is not handled</span>
+      <span class="sev sev-medium">Medium</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The Learning Domain allows updating a content item — including its <code>is_required</code> flag. Two cases:</p>
+      <p><strong>Case A (FALSE → TRUE):</strong> A student already viewed this content item before it became required. Their <code>LessonContentView</code> row exists. But <code>viewed_required_count</code> was not incremented when it was first viewed (because it wasn't required then). The student now has an invisible deficit — they've watched the video but the counter doesn't reflect it.</p>
+      <p><strong>Case B (TRUE → FALSE):</strong> A student's <code>viewed_required_count</code> includes this item. The item is now not required. Their counter is inflated, and <code>required_content_count</code> will be decremented by the fan-out handler, leaving <code>viewed &gt; required</code> — technically fine for gate evaluation but semantically wrong.</p>
+      <h4>Recommendation</h4>
+      <p>The Learning Domain should emit a <code>LessonContentRequirementChanged(content_id, lesson_id, old_value, new_value)</code> event. UserProgress handles it by: for FALSE→TRUE, checking if a <code>LessonContentView</code> exists for each enrolled student and, if so, incrementing <code>viewed_required_count</code>. Apply the same background task fan-out pattern from F1.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F17">
+    <div class="finding-header critical">
+      <span class="finding-id">F17</span>
+      <span class="finding-title"><code>_unlock_next_module</code> never unlocks the first lesson of the next module</span>
+      <span class="sev sev-critical">Critical</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The v1 cascade is: <code>_check_lesson_completion</code> → <code>_unlock_next_lesson</code> → <code>_check_module_completion</code> → <code>_unlock_next_module</code> → <code>_check_course_completion</code>. The <code>_unlock_next_module</code> function is mentioned but never specified. It presumably sets <code>ModuleProgress.status = 'unlocked'</code>. But it does <strong>not</strong> unlock the first <code>LessonProgress</code> row in that next module. After module unlock, all lessons in the new module still have <code>status=locked</code>. No lesson is unlocked. The student is stuck — no <code>get_next_lesson</code> call will return anything from the new module.</p>
+
+      <div class="diff-grid">
+        <div class="diff-block before">
+          <div class="diff-label">v1 — next module unlocked, lessons still all locked</div>
+          <pre>ModuleProgress(module=2) → status='unlocked'  ✓
+LessonProgress(module=2, lesson=1) → status='locked'  ✗
+LessonProgress(module=2, lesson=2) → status='locked'  ✗
+LessonProgress(module=2, lesson=3) → status='locked'  ✗
+→ get_next_lesson returns nothing. Student is stuck.</pre>
+        </div>
+        <div class="diff-block after">
+          <div class="diff-label">v2 — _unlock_next_module also unlocks first lesson</div>
+          <pre>def _unlock_next_module(enrollment_id, completed_module_id):
+    next_mp = find_next_module(enrollment_id, completed_module_id)
+    if not next_mp:
+        return
+
+    next_mp.status     = 'unlocked'
+    next_mp.unlocked_at = now()
+
+
+    first_lesson = LessonProgress.filter(
+        enrollment_id=enrollment_id,
+        module_id=next_mp.module_id,
+        lesson_order=1,
+        status='locked'
+    ).first()
+    if first_lesson:
+        first_lesson.status     = 'unlocked'
+        first_lesson.unlocked_at = now()
+        EMIT LessonUnlocked</pre>
+        </div>
+      </div>
+
+      <p>This is a logic gap, not an edge case. Without this fix, every sequential course breaks at every module boundary for every student.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ADDITIONAL FINDINGS ═══ -->
+<section id="area6">
+  <div class="area-header">
+    <div class="area-num gray">+</div>
+    <h2 style="border:none; padding:0; margin:0;">Additional Findings</h2>
+  </div>
+
+  <div class="finding" id="F18">
+    <div class="finding-header critical">
+      <span class="finding-id">F18</span>
+      <span class="finding-title">Bulk offline attendance creates race condition on module completion counter</span>
+      <span class="sev sev-critical">Critical</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>When a mentor marks attendance for a session that covered 5 lessons, the <code>AttendanceMarked</code> event contains <code>lesson_ids: [L1, L2, L3, L4, L5]</code>. The handler loops and calls <code>handle_attendance_marked</code> for each lesson. Each call ultimately calls <code>_check_module_completion</code>, which reads <code>completed_lessons_count</code>, increments it, and checks if all lessons are done.</p>
+      <p>If these 5 calls run concurrently (either via Celery parallelism or async task workers), they each read the same starting value of <code>completed_lessons_count</code> before any write lands:</p>
+
+      <pre>Module has 5 lessons. completed_lessons_count starts at 0.
+All 5 completion checks run concurrently — no row locking.
+
+Worker 1: reads 0, writes 1, checks: 1 >= 5? No
+Worker 2: reads 0, writes 1, checks: 1 >= 5? No   ← lost update
+Worker 3: reads 0, writes 1, checks: 1 >= 5? No   ← lost update
+Worker 4: reads 0, writes 1, checks: 1 >= 5? No   ← lost update
+Worker 5: reads 0, writes 1, checks: 1 >= 5? No   ← lost update
+
+Final completed_lessons_count = 1.
+Module never completes.
+Student is permanently stuck unless admin manually overrides.</pre>
+
+      <h4>Recommendation</h4>
+      <p><strong>For the cascade itself:</strong> The <code>_check_module_completion</code> function must acquire a row-level lock on the <code>ModuleProgress</code> row using <code>SELECT ... FOR UPDATE</code> before reading and incrementing. This serialises concurrent lesson completions for the same module.</p>
+      <p><strong>For the bulk attendance event:</strong> Process lesson completions for a single enrollment serially, not in parallel. The handler serialises completions per enrollment via a per-enrollment distributed lock or by processing the lesson list in-order within a single task.</p>
+
+      <pre>-- v2: Row-level locking in _check_module_completion
+def _check_module_completion(enrollment_id, module_id):
+    with transaction.atomic():
+
+        mp = ModuleProgress.objects.select_for_update().get(
+            enrollment_id=enrollment_id,
+            module_id=module_id
+        )
+
+        ...</pre>
+
+      <div class="callout warning" style="margin-top:12px">
+        <strong>SELECT FOR UPDATE must be applied consistently</strong> throughout the entire cascade chain: <code>_check_lesson_completion</code>, <code>_check_module_completion</code>, and <code>_check_course_completion</code> all need row-level locks on their respective progress rows. This is non-negotiable for correctness in any concurrent environment.
+      </div>
+    </div>
+  </div>
+
+  <div class="finding" id="F19">
+    <div class="finding-header low">
+      <span class="finding-id">F19</span>
+      <span class="finding-title">Re-enroll after drop resets progress to zero — product decision not explicit</span>
+      <span class="sev sev-low">Low</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>When a student drops a course and re-enrolls, a new <code>CourseEnrollment</code> is created (new UUID). <code>ProgressInitialisationService.initialise_progress</code> is called for the new enrollment and creates all-fresh <code>LessonProgress</code> rows (starting from <code>locked</code>/<code>unlocked</code>). The student loses all previously completed progress. This may or may not be the intended behaviour — the v1 document never explicitly decided.</p>
+      <h4>Impact</h4>
+      <p>A student who drops at 80% completion and re-enrolls starts at 0%. For online self-paced learning this feels punitive. For offline group-based learning it may be intentional (they join a new cohort).</p>
+      <h4>Recommendation</h4>
+      <p>Make this an explicit product decision and document it. If "preserve progress on re-enroll" is desired, add a <code>previous_enrollment_id</code> FK (nullable) to <code>CourseEnrollment</code>. On initialisation, check if a completed LessonProgress row exists for the user on a previous enrollment for the same lesson, and if so, start those lessons as <code>completed</code> with the original <code>completion_source</code>. This is opt-in behaviour controlled by Learning Domain's re-enrollment business rules.</p>
+    </div>
+  </div>
+
+  <div class="finding" id="F20">
+    <div class="finding-header low">
+      <span class="finding-id">F20</span>
+      <span class="finding-title">Admin override has no audit trail in the schema</span>
+      <span class="sev sev-low">Low</span>
+    </div>
+    <div class="finding-body">
+      <h4>Finding</h4>
+      <p>The <code>override_lesson_complete</code> API requires a <code>reason</code> string. But <code>LessonProgress</code> has no <code>override_reason</code> or <code>override_by_id</code> fields. The reason is received by the API and discarded. When a compliance audit asks "why was this student's lesson manually completed?", there's no answer in the database.</p>
+      <h4>Recommendation</h4>
+      <p>Add two nullable fields to <code>LessonProgress</code>:</p>
+      <pre>override_by_id     UUID NULLABLE  -- actor who performed the override
+override_reason    TEXT NULLABLE  -- reason provided at override time</pre>
+      <p>These fields are only populated when <code>completion_source = 'admin_override'</code>. No migration complexity — both are nullable with no backfill needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SCHEMA CHANGES v2 ═══ -->
+<section id="schema-changes">
+  <h2>Schema Changes for v2 <span class="tag">RESOLUTION</span></h2>
+
+  <table class="change-table">
+    <tr><th>Table</th><th>Change</th><th>Reason</th><th>Type</th></tr>
+
+    <tr class="change-added"><td>progress_courseprogress</td><td>ADD <code>delivery_format VARCHAR(10)</code></td><td>F14 — avoid cross-domain read on every content view</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_courseprogress</td><td>ADD <code>is_sequential BOOLEAN DEFAULT TRUE</code></td><td>F11 — non-sequential continue logic branch</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_courseprogress</td><td>ADD <code>cached_percentage SMALLINT DEFAULT 0</code></td><td>F6 — fast dashboard read without SUM query</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_moduleprogress</td><td>ADD <code>is_stale BOOLEAN DEFAULT FALSE</code></td><td>Referenced in services section but missing from schema</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_lessonprogress</td><td>ADD <code>is_stale BOOLEAN DEFAULT FALSE</code></td><td>Handle lesson deletion without data loss</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_lessonprogress</td><td>ADD <code>is_active BOOLEAN DEFAULT TRUE</code></td><td>Referenced in CourseProgressService but missing from schema</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_lessonprogress</td><td>ADD <code>override_by_id UUID NULLABLE</code></td><td>F20 — audit trail for admin overrides</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>progress_lessonprogress</td><td>ADD <code>override_reason TEXT NULLABLE</code></td><td>F20 — audit trail for admin overrides</td><td>ADD COLUMN</td></tr>
+    <tr class="change-modified"><td>progress_lessonprogress</td><td>CHANGE CHECK constraint from <code>viewed &lt;= required + 1</code> to <code>viewed &lt;= required</code></td><td>F5 — remove false tolerance</td><td>MODIFY CONSTRAINT</td></tr>
+    <tr class="change-added"><td>progress_lessoncontentview</td><td>ADD <code>total_duration_seconds INT NULLABLE</code></td><td>F15 — video watch threshold evaluation</td><td>ADD COLUMN</td></tr>
+    <tr class="change-added"><td>courses_lessoncontent (Learning Domain)</td><td>ADD <code>minimum_watch_ratio DECIMAL(3,2) DEFAULT 0.0</code></td><td>F15 — configurable video completion threshold</td><td>ADD COLUMN (Learning Domain)</td></tr>
+    <tr class="change-added"><td>courses_courseenrollment (Learning Domain)</td><td>ADD <code>previous_enrollment_id UUID NULLABLE FK</code></td><td>F19 — optional progress preservation on re-enroll</td><td>ADD COLUMN (Learning Domain)</td></tr>
+  </table>
+
+  <div class="callout warning" style="margin-top:16px">
+    <strong>New index required (F8 fix):</strong> <code>CREATE INDEX idx_lp_enr_module_lesson ON progress_lessonprogress (enrollment_id, module_order, lesson_order) WHERE status IN ('unlocked','in_progress') AND is_stale = FALSE AND is_active = TRUE</code> — this partial index powers the <code>get_next_action</code> query efficiently.
+  </div>
+</section>
+
+<!-- ═══ ALGORITHM CHANGES v2 ═══ -->
+<section id="algorithm-changes">
+  <h2>Algorithm Changes for v2 <span class="tag">RESOLUTION</span></h2>
+
+  <table>
+    <tr><th>Algorithm</th><th>Change</th><th>Fixes</th></tr>
+    <tr><td><code>record_content_view</code></td><td>Use <code>get_or_create</code> and only increment counter if <code>created=True</code>. Use <code>F('viewed_required_count') + 1</code>. Call <code>refresh_from_db()</code> before completion check.</td><td>F2</td></tr>
+    <tr><td><code>_check_lesson_completion</code></td><td>Add <code>select_for_update()</code> on LessonProgress row at start of method.</td><td>F18</td></tr>
+    <tr><td><code>_check_module_completion</code></td><td>Add <code>select_for_update()</code> on ModuleProgress row. Use <code>F('completed_lessons_count') + 1</code> for increment.</td><td>F2, F18</td></tr>
+    <tr><td><code>_check_course_completion</code></td><td>Add <code>select_for_update()</code> on CourseProgress row. Use <code>F('completed_modules_count') + 1</code> for increment. Update <code>cached_percentage</code> here.</td><td>F2, F18</td></tr>
+    <tr><td><code>_unlock_next_module</code></td><td>After setting next ModuleProgress to <code>unlocked</code>, also set the first LessonProgress of that module to <code>unlocked</code>.</td><td>F17 — critical gap</td></tr>
+    <tr><td><code>get_next_lesson</code> → <code>get_next_action</code></td><td>Rename. Change priority: <code>in_progress</code> first (by <code>started_at DESC</code>), then <code>unlocked</code> (by <code>module_order ASC, lesson_order ASC</code>). Add <code>assessment_pending</code> detection returning typed next-action response. Branch on <code>is_sequential</code>.</td><td>F8, F9, F10, F11</td></tr>
+    <tr><td>fan-out handlers</td><td>All handlers that update N rows where N = enrolled students must be converted to background tasks (Celery or equivalent) with batch processing (500 rows/batch). Applies to: <code>handle_content_deleted</code>, <code>handle_content_added</code>, <code>handle_lesson_published</code>, <code>handle_lesson_deleted</code>, <code>handle_assessment_added</code>.</td><td>F1</td></tr>
+    <tr><td><code>handle_content_deleted</code>, <code>handle_content_added</code></td><td>Add <code>WHERE status != 'completed'</code> filter to all counter update queries.</td><td>F3</td></tr>
+    <tr><td><code>handle_attendance_marked</code></td><td>Change to bypass content gate only (set <code>viewed_required_count = required_content_count</code>), then call <code>_check_lesson_completion</code> to evaluate homework gate. Do not directly set <code>status=completed</code>.</td><td>F12</td></tr>
+    <tr><td><code>initialise_progress</code></td><td>Snapshot <code>delivery_format</code> and <code>is_sequential</code> from enrollment + course onto CourseProgress row.</td><td>F11, F14</td></tr>
+  </table>
+
+  <h3>New event subscriptions required</h3>
+  <table>
+    <tr><th>New Event</th><th>Producer</th><th>Handler</th><th>Fixes</th></tr>
+    <tr><td><code>LessonContentAdded</code></td><td>Learning Domain / LessonContentService</td><td><code>ProgressInitialisationService.handle_content_added</code></td><td>F4</td></tr>
+    <tr><td><code>LessonContentRequirementChanged</code></td><td>Learning Domain / LessonContentService</td><td><code>ProgressInitialisationService.handle_content_requirement_changed</code></td><td>F16</td></tr>
+    <tr><td><code>EnrollmentDeliveryFormatChanged</code></td><td>Learning Domain / CourseEnrollmentService</td><td><code>CourseProgressService.handle_delivery_format_changed</code></td><td>F14</td></tr>
+    <tr><td><code>AttendanceRevoked</code></td><td>Mentorship Domain (future)</td><td><code>LessonProgressService.handle_attendance_revoked</code> (admin-gated)</td><td>F13</td></tr>
+  </table>
+
+  <div class="callout success" style="margin-top:24px">
+    <strong>v2 verdict:</strong> With the 4 critical findings resolved (F2, F8, F17, F18) and the 7 high-severity findings addressed, the architecture is production-ready. The remaining medium and low findings are improvements that can be done in a follow-up sprint without blocking the initial implementation. Total new events required from Learning Domain: 2 (<code>LessonContentAdded</code>, <code>LessonContentRequirementChanged</code>). Total schema additions: 8 columns across 4 tables. No existing columns removed or renamed.
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

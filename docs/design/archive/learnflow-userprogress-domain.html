@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnFlow — UserProgress Domain Design</title>
+<style>
+  :root {
+    --accent:
+    --teal:
+    --coral:
+    --amber:
+    --sky:
+    --gray:
+    --green:
+    --red:
+    --text:
+    --border:
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system,'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.7; color:var(--text); background:var(--bg-page); }
+  .layout { display:flex; min-height:100vh; }
+  nav { width:264px; min-width:264px; background:var(--bg); border-right:1px solid var(--border); padding:24px 0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  nav .logo { padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  nav .logo h1 { font-size:15px; font-weight:600; color:var(--accent); }
+  nav .logo p  { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  nav a { display:block; padding:7px 20px; font-size:13px; color:var(--text-muted); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; }
+  nav a:hover { color:var(--accent); background:var(--accent-light); border-left-color:var(--accent); }
+  nav .section-label { padding:14px 20px 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); }
+  nav a.sub { padding-left:32px; font-size:12px; }
+  main { flex:1; padding:48px 56px; max-width:1010px; }
+  section { margin-bottom:64px; }
+  h2 { font-size:26px; font-weight:600; color:var(--text); margin-bottom:8px; padding-bottom:12px; border-bottom:2px solid var(--accent-light); }
+  h2 .tag { display:inline-block; font-size:11px; font-weight:500; background:var(--accent-light); color:var(--accent); padding:2px 8px; border-radius:4px; margin-left:10px; vertical-align:middle; letter-spacing:0.05em; }
+  h3 { font-size:17px; font-weight:600; color:var(--text); margin:28px 0 12px; }
+  h4 { font-size:14px; font-weight:600; color:var(--text); margin:16px 0 6px; }
+  p  { margin-bottom:12px; color:var(--text-muted); font-size:14px; }
+  pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:16px 18px; font-family:'SF Mono','Fira Code',monospace; font-size:12.5px; line-height:1.65; overflow-x:auto; margin:12px 0; color:var(--text); }
+  code { background:var(--code-bg); font-family:'SF Mono','Fira Code',monospace; font-size:12px; padding:1px 5px; border-radius:3px; color:var(--accent); }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+  th { background:var(--gray-light); font-weight:600; text-align:left; padding:9px 13px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  td { padding:8px 13px; border-bottom:1px solid var(--border); vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:none; }
+  td code { font-size:11.5px; }
+  .callout { border-left:3px solid var(--accent); background:var(--accent-light); border-radius:0 8px 8px 0; padding:13px 16px; margin:14px 0; font-size:13.5px; color:var(--text); }
+  .callout.warning { border-color:var(--amber); background:var(--amber-light); }
+  .callout.success { border-color:var(--teal);  background:var(--teal-light); }
+  .callout.sky     { border-color:var(--sky);   background:var(--sky-light); }
+  .callout.coral   { border-color:var(--coral); background:var(--coral-light); }
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; letter-spacing:0.05em; text-transform:uppercase; }
+  .badge-pk   { background:
+  .badge-fk   { background:var(--teal-light); color:var(--teal); }
+  .badge-idx  { background:var(--amber-light); color:var(--amber); }
+  .badge-uniq { background:var(--coral-light); color:var(--coral); }
+  .badge-soft { background:var(--sky-light); color:var(--sky); }
+  .badge-den  { background:var(--accent-light); color:var(--accent); }
+  .schema-block  { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:24px; overflow:hidden; }
+  .schema-header { background:var(--accent); color:white; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .schema-header h4 { margin:0; font-size:14px; font-weight:700; color:white; font-family:'SF Mono',monospace; }
+  .schema-header span { font-size:11px; opacity:0.75; font-weight:400; }
+  .schema-header.teal  { background:var(--teal); }
+  .schema-header.amber { background:var(--amber); }
+  .schema-header.sky   { background:var(--sky); }
+  .schema-header.coral { background:var(--coral); }
+  .schema-header.gray  { background:var(--gray); }
+  .schema-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .schema-table th { background:var(--gray-light); padding:7px 14px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:600; border-bottom:1px solid var(--border); }
+  .schema-table td { padding:7px 14px; border-bottom:1px solid
+  .schema-table tr:last-child td { border-bottom:none; }
+  .field-name  { font-family:'SF Mono',monospace; font-size:12px; font-weight:600; color:var(--text); }
+  .field-type  { font-family:'SF Mono',monospace; font-size:11.5px; color:var(--teal); white-space:nowrap; }
+  .field-notes { color:var(--text-muted); font-size:12px; }
+  .decision-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+  .decision-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:16px 18px; border-top:3px solid var(--accent); }
+  .decision-card h4 { margin-top:0; font-size:13px; color:var(--accent); }
+  .decision-card p  { font-size:12.5px; margin-bottom:0; }
+  .decision-card.teal  { border-top-color:var(--teal); }  .decision-card.teal h4  { color:var(--teal); }
+  .decision-card.coral { border-top-color:var(--coral); } .decision-card.coral h4 { color:var(--coral); }
+  .decision-card.amber { border-top-color:var(--amber); } .decision-card.amber h4 { color:var(--amber); }
+  .decision-card.sky   { border-top-color:var(--sky); }   .decision-card.sky h4   { color:var(--sky); }
+  .decision-card.gray  { border-top-color:var(--gray); }  .decision-card.gray h4  { color:var(--gray); }
+  .erd-container { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:28px; margin:16px 0; overflow-x:auto; }
+  .erd-row { display:flex; align-items:center; gap:0; margin-bottom:6px; flex-wrap:nowrap; }
+  .erd-box { border:1.5px solid var(--border); border-radius:6px; padding:7px 14px; font-family:'SF Mono',monospace; font-size:12px; font-weight:600; background:var(--bg); white-space:nowrap; color:var(--text); }
+  .erd-box.core    { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+  .erd-box.prog    { border-color:var(--teal);   background:var(--teal-light);   color:var(--teal); }
+  .erd-box.gate    { border-color:var(--amber);  background:var(--amber-light);  color:var(--amber); }
+  .erd-box.event   { border-color:var(--coral);  background:var(--coral-light);  color:var(--coral); }
+  .erd-box.ext     { border-color:var(--sky);    background:var(--sky-light);    color:var(--sky); border-style:dashed; }
+  .erd-line { font-family:monospace; font-size:13px; color:var(--text-muted); padding:0 4px; white-space:nowrap; }
+  .erd-section { margin-bottom:20px; }
+  .erd-section h5 { font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px; font-weight:600; }
+  hr { border:none; border-top:1px solid var(--border); margin:28px 0; }
+  /* State machine */
+  .sm-wrap { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin:14px 0; overflow-x:auto; }
+  .sm-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:12px; }
+  .sm-row   { display:flex; align-items:center; flex-wrap:nowrap; gap:0; margin-bottom:8px; }
+  .sm-state { border-radius:6px; padding:7px 14px; font-size:12px; font-weight:700; font-family:'SF Mono',monospace; white-space:nowrap; }
+  .sm-state.locked  { background:var(--gray-light);  color:var(--gray); }
+  .sm-state.unlocked{ background:var(--sky-light);   color:var(--sky); }
+  .sm-state.active  { background:var(--amber-light); color:var(--amber); }
+  .sm-state.pending { background:var(--coral-light); color:var(--coral); }
+  .sm-state.done    { background:var(--teal-light);  color:var(--teal); }
+  .sm-arrow { display:flex; flex-direction:column; align-items:center; padding:0 8px; min-width:80px; }
+  .sm-arrow .sm-line { font-size:18px; color:var(--text-muted); line-height:1; }
+  .sm-arrow .sm-cond { font-size:10px; color:var(--text-muted); text-align:center; max-width:90px; white-space:nowrap; }
+  /* Service blocks */
+  .svc-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+  .svc-header { padding:11px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .svc-header.accent { background:var(--accent); }
+  .svc-header.teal   { background:var(--teal); }
+  .svc-header.amber  { background:var(--amber); }
+  .svc-header.sky    { background:var(--sky); }
+  .svc-header.coral  { background:var(--coral); }
+  .svc-header.gray   { background:var(--gray); }
+  .svc-header h4 { margin:0; font-size:14px; font-weight:700; color:white; font-family:'SF Mono',monospace; }
+  .svc-header span { font-size:11px; color:rgba(255,255,255,0.7); }
+  .svc-body { padding:16px 18px; }
+  .svc-body h5 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin:14px 0 6px; }
+  .svc-body h5:first-child { margin-top:0; }
+  .method-row { display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px dashed
+  .method-row:last-child { border-bottom:none; }
+  .method-name { font-family:'SF Mono',monospace; font-size:12px; font-weight:600; color:var(--accent); min-width:230px; }
+  .method-desc { color:var(--text-muted); font-size:12.5px; }
+  /* Event blocks */
+  .event-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+  .event-hdr { padding:9px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .event-hdr.sky    { background:var(--sky); }
+  .event-hdr.accent { background:var(--accent); }
+  .event-hdr.teal   { background:var(--teal); }
+  .event-hdr.amber  { background:var(--amber); }
+  .event-hdr.coral  { background:var(--coral); }
+  .event-hdr.gray   { background:var(--gray); }
+  .event-hdr h4  { margin:0; font-size:13px; font-weight:700; color:white; font-family:'SF Mono',monospace; }
+  .event-hdr span{ font-size:11px; color:rgba(255,255,255,0.7); }
+  .event-body { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:0; }
+  .event-col  { padding:12px 14px; border-right:1px solid var(--border); font-size:12.5px; }
+  .event-col:last-child { border-right:none; }
+  .event-col h6 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px; }
+  .event-col ul { list-style:none; padding:0; }
+  .event-col ul li { color:var(--text-muted); padding:2px 0; font-size:12px; }
+  .event-col ul li::before { content:"→ "; color:var(--accent); }
+  /* API */
+  .ep-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+  .ep-hdr { padding:10px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:var(--gray-light); }
+  .ep-path { font-family:'SF Mono',monospace; font-size:13px; font-weight:600; color:var(--text); }
+  .ep-body { padding:14px 16px; display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:12.5px; }
+  .ep-col h6 { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px; }
+  .ep-col pre { margin:0; font-size:11.5px; }
+  .badge-get    { background:
+  .badge-post   { background:var(--teal-light); color:var(--teal); }
+  .badge-patch  { background:var(--amber-light); color:var(--amber); }
+  /* Algorithm */
+  .algo-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin:16px 0; overflow:hidden; }
+  .algo-header { background:var(--gray); padding:9px 18px; }
+  .algo-header h4 { margin:0; color:white; font-size:13px; font-family:'SF Mono',monospace; }
+  .algo-body { padding:16px 18px; }
+  /* Gate grid */
+  .gate-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  .gate-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .gate-card h4 { margin-top:0; font-size:13px; }
+  .gate-card p  { font-size:12px; margin-bottom:0; }
+  .gate-card.content { border-top:3px solid var(--accent); } .gate-card.content h4 { color:var(--accent); }
+  .gate-card.homework { border-top:3px solid var(--amber); } .gate-card.homework h4 { color:var(--amber); }
+  .gate-card.attendance{ border-top:3px solid var(--sky); }  .gate-card.attendance h4 { color:var(--sky); }
+  .gate-card.assessment{ border-top:3px solid var(--coral); }.gate-card.assessment h4 { color:var(--coral); }
+  /* Cascade */
+  .cascade-row { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px dashed
+  .cascade-row:last-child { border-bottom:none; }
+  .cascade-num { font-family:'SF Mono',monospace; font-size:11px; background:var(--accent); color:white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700; margin-top:1px; }
+  .cascade-text { font-size:13px; color:var(--text-muted); }
+  .cascade-text strong { color:var(--text); }
+  @media (max-width:1100px) { nav { display:none; } main { padding:24px 20px; } }
+  @media (max-width:800px) { .decision-grid { grid-template-columns:1fr; } .event-body { grid-template-columns:1fr; } .ep-body { grid-template-columns:1fr; } .gate-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<nav>
+  <div class="logo">
+    <h1>UserProgress Domain</h1>
+    <p>LearnFlow — Domain Design v1.0</p>
+  </div>
+  <div class="section-label">Overview</div>
+  <a href="
+  <div class="section-label">Data Model</div>
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Progress Logic</div>
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Application Layer</div>
+  <a href="
+  <a href="
+  <a href="
+  <div class="section-label">Events</div>
+  <a href="
+  <a href="
+  <div class="section-label">Dependencies</div>
+  <a href="
+  <a href="
+</nav>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main>
+
+<!-- ═══════════ OVERVIEW ═══════════ -->
+<section id="overview">
+  <h2>UserProgress Domain Overview <span class="tag">SCOPE</span></h2>
+
+  <div class="callout sky" style="margin-bottom:20px">
+    <strong>Decisions incorporated:</strong><br>
+    <span style="font-size:13px">
+      1. Progress unit = <code>LessonProgress</code> (not content-item level)<br>
+      2. Lesson complete when: all required content viewed <strong>AND</strong> required homework submitted<br>
+      3. Next lesson unlocks automatically on lesson completion<br>
+      4. Next module unlocks when: all lessons complete <strong>AND</strong> module assessment passed<br>
+      5. Online and offline share the same model — <code>completion_source</code> records the difference<br>
+      6. UserProgress triggers <code>EnrollmentCompleted</code> after all modules pass
+    </span>
+  </div>
+
+  <p>The UserProgress Domain owns the complete state of a student's journey through a course. It is a <strong>consumer domain</strong>: it owns no content definitions, no enrollments, no assessments. It only tracks state. Every mutation is triggered by an event from another domain or a direct student action.</p>
+
+  <div class="decision-grid" style="margin:20px 0;">
+    <div class="decision-card teal">
+      <h4>Owns</h4>
+      <p><code>CourseProgress</code>, <code>ModuleProgress</code>, <code>LessonProgress</code>, <code>LessonContentView</code> — all progress state rows, counters, gate flags, and timestamps.</p>
+    </div>
+    <div class="decision-card sky">
+      <h4>Reads (cross-domain, same DB)</h4>
+      <p>Learning Domain tables at initialisation time to snapshot <code>required_content_count</code>, <code>homework_required</code>, and <code>total_lessons_count</code>. All subsequent checks use only UserProgress tables.</p>
+    </div>
+    <div class="decision-card amber">
+      <h4>Consumes events from</h4>
+      <p>Learning Domain, Submissions Domain, Assessment Domain, Mentorship Domain (future). All writes are triggered by events or direct student API calls (content view).</p>
+    </div>
+    <div class="decision-card coral">
+      <h4>Produces events for</h4>
+      <p>Notification Domain, Analytics Domain, Certification Domain (via <code>CourseCompleted</code> → Learning's <code>EnrollmentCompleted</code>).</p>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <strong>Hot path read pattern:</strong> A student opening a lesson triggers: (1) <code>LessonSelector.get_lesson_detail</code> from Learning Domain, (2) <code>LessonProgressSelector.get_lesson_progress</code> from UserProgress. These are two separate domain reads. They must never be merged into a god-query — each domain owns its data.
+  </div>
+</section>
+
+<!-- ═══════════ TABLES ═══════════ -->
+<section id="tables">
+  <h2>Database Tables <span class="tag">SECTION 2</span></h2>
+  <p>Four tables. Each mirrors one level of the Course → Module → Lesson hierarchy plus a lightweight content view tracking table.</p>
+
+  <div class="erd-container" style="padding:20px 24px; margin-bottom:0;">
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-radius:8px; overflow:hidden; border:1px solid var(--border);">
+      <div style="background:var(--teal-light); padding:14px; border-right:1px solid var(--border);">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--teal); margin-bottom:8px;">🎯 Course Level</div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.8;">
+          progress_courseprogress<br>
+          <span style="font-size:11px; opacity:0.8;">1 row per enrollment</span>
+        </div>
+      </div>
+      <div style="background:var(--accent-light); padding:14px; border-right:1px solid var(--border);">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--accent); margin-bottom:8px;">📦 Module Level</div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.8;">
+          progress_moduleprogress<br>
+          <span style="font-size:11px; opacity:0.8;">1 row per module per enrollment</span>
+        </div>
+      </div>
+      <div style="background:var(--amber-light); padding:14px; border-right:1px solid var(--border);">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--amber); margin-bottom:8px;">📝 Lesson Level</div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.8;">
+          progress_lessonprogress<br>
+          <span style="font-size:11px; opacity:0.8;">1 row per lesson per enrollment</span>
+        </div>
+      </div>
+      <div style="background:var(--gray-light); padding:14px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--gray); margin-bottom:8px;">👁 View Tracking</div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.8;">
+          progress_lessoncontentview<br>
+          <span style="font-size:11px; opacity:0.8;">1 row per content item per enrollment</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:16px;">
+    <strong>Snapshot strategy:</strong> At enrollment time, UserProgress snapshots structural counts from the Learning Domain (<code>total_lessons_count</code>, <code>required_content_count</code>, <code>homework_required</code>). After that, progress checks read only UserProgress tables — no cross-domain queries in the hot path. Snapshots are updated when Learning Domain emits content change events.
+  </div>
+
+  <hr>
+
+  <!-- CourseProgress -->
+  <h3 id="tbl-courseprogress">CourseProgress</h3>
+  <p>One row per enrollment. The top-level progress aggregate. Owns the completion percentage visible on the student dashboard and the <code>last_activity_at</code> timestamp used for "continue where you left off."</p>
+
+  <div class="schema-block">
+    <div class="schema-header teal">
+      <h4>progress_courseprogress</h4>
+      <span>1 row per enrollment · denormalized counts · completion trigger</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes">gen_random_uuid()</td></tr>
+      <tr><td class="field-name">enrollment</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-uniq">UNIQUE</span></td><td class="field-notes">→ <code>courses_courseenrollment.id</code>, PROTECT. One-to-one: UNIQUE ensures only one progress per enrollment.</td></tr>
+      <tr><td class="field-name">course_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-den">DENORM</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">Copied from enrollment.course_id at creation. Enables direct progress lookup by course without joining CourseEnrollment.</td></tr>
+      <tr><td class="field-name">user_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-den">DENORM</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">Copied from enrollment.user_id at creation. Enables dashboard query without joining through enrollment.</td></tr>
+      <tr><td class="field-name">status</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL DEFAULT 'not_started'</td><td class="field-notes"><code>not_started</code> | <code>in_progress</code> | <code>completed</code>. Terminal state: completed is immutable.</td></tr>
+      <tr><td class="field-name">total_modules_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Snapshot of published module count at enrollment time. Updated when <code>ModulePublished</code> / <code>ModuleDeleted</code> events received.</td></tr>
+      <tr><td class="field-name">completed_modules_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Incremented when a <code>ModuleProgress</code> row transitions to <code>completed</code>. Never decremented.</td></tr>
+      <tr><td class="field-name">started_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set on first content view. NULL = student enrolled but never opened a lesson.</td></tr>
+      <tr><td class="field-name">completed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when <code>completed_modules_count == total_modules_count</code>. Triggers <code>CourseCompleted</code> event.</td></tr>
+      <tr><td class="field-name">last_activity_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Updated on every content view. Used for "continue learning" sort on student dashboard.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL DEFAULT now()</td><td class="field-notes">Set when <code>StudentEnrolled</code> event processed.</td></tr>
+    </table>
+  </div>
+
+  <pre>-- Indexes
+CREATE UNIQUE INDEX uq_courseprogress_enrollment ON progress_courseprogress (enrollment_id);
+CREATE INDEX idx_courseprogress_user_status      ON progress_courseprogress (user_id, status);
+CREATE INDEX idx_courseprogress_course           ON progress_courseprogress (course_id, status);
+
+-- Constraints
+ALTER TABLE progress_courseprogress
+  ADD CONSTRAINT chk_cp_status   CHECK (status IN ('not_started','in_progress','completed')),
+  ADD CONSTRAINT chk_cp_counts   CHECK (completed_modules_count &lt;= total_modules_count),
+  ADD CONSTRAINT chk_cp_complete CHECK (completed_at IS NULL OR status = 'completed');</pre>
+
+  <hr>
+
+  <!-- ModuleProgress -->
+  <h3 id="tbl-moduleprogress">ModuleProgress</h3>
+  <p>One row per module per enrollment. Owns the assessment gate — the critical piece that separates "all lessons done" from "module complete." The <code>assessment_pending</code> status is the domain's way of saying: student finished studying, now go take the assessment.</p>
+
+  <div class="schema-block">
+    <div class="schema-header accent">
+      <h4>progress_moduleprogress</h4>
+      <span>1 row per module per enrollment · lesson counter · assessment gate</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">enrollment</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ <code>courses_courseenrollment.id</code>, PROTECT.</td></tr>
+      <tr><td class="field-name">module_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ <code>courses_module.id</code>, PROTECT (same DB).</td></tr>
+      <tr><td class="field-name">course_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-den">DENORM</span></td><td class="field-notes">Copied from module.course_id. Enables fast module listing per enrollment+course.</td></tr>
+      <tr><td class="field-name">status</td><td class="field-type">VARCHAR(25)</td><td>NOT NULL DEFAULT 'locked'</td><td class="field-notes"><code>locked</code> | <code>unlocked</code> | <code>in_progress</code> | <code>assessment_pending</code> | <code>completed</code>. See state machine below.</td></tr>
+      <tr><td class="field-name">total_lessons_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Snapshot of published lesson count at enrollment/unlock time. Updated by <code>LessonPublished</code> and <code>LessonDeleted</code> events.</td></tr>
+      <tr><td class="field-name">completed_lessons_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Incremented when a <code>LessonProgress</code> row transitions to <code>completed</code>. Source of truth for checking "all lessons done."</td></tr>
+      <tr><td class="field-name">assessment_required</td><td class="field-type">BOOLEAN</td><td>NOT NULL DEFAULT FALSE</td><td class="field-notes">Set at enrollment time by querying <code>AssessmentSelector.module_has_assessment(module_id)</code>. Updated if assessment added/removed later via event.</td></tr>
+      <tr><td class="field-name">assessment_passed</td><td class="field-type">BOOLEAN</td><td>NOT NULL DEFAULT FALSE</td><td class="field-notes">Set to TRUE when <code>ModuleAssessmentPassed</code> event received from Assessment Domain.</td></tr>
+      <tr><td class="field-name">assessment_passed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Timestamp from <code>ModuleAssessmentPassed</code> event payload.</td></tr>
+      <tr><td class="field-name">module_order</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Snapshot of <code>Module.order</code> at enrollment time. Used for sequential unlock logic without querying Learning Domain. Updated on <code>ModulesReordered</code> event.</td></tr>
+      <tr><td class="field-name">unlocked_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when status transitions to <code>unlocked</code>.</td></tr>
+      <tr><td class="field-name">completed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when all gates pass.</td></tr>
+      <tr><td class="field-name">last_activity_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Updated on any lesson activity within this module.</td></tr>
+    </table>
+  </div>
+
+  <pre>-- Indexes
+CREATE UNIQUE INDEX uq_moduleprogress_enr_module  ON progress_moduleprogress (enrollment_id, module_id);
+CREATE INDEX idx_moduleprogress_enr_course         ON progress_moduleprogress (enrollment_id, course_id, module_order);
+CREATE INDEX idx_moduleprogress_status             ON progress_moduleprogress (enrollment_id, status);
+
+-- Constraints
+ALTER TABLE progress_moduleprogress
+  ADD CONSTRAINT chk_mp_status   CHECK (status IN ('locked','unlocked','in_progress','assessment_pending','completed')),
+  ADD CONSTRAINT chk_mp_counts   CHECK (completed_lessons_count &lt;= total_lessons_count),
+  ADD CONSTRAINT chk_mp_complete CHECK (completed_at IS NULL OR status = 'completed');</pre>
+
+  <hr>
+
+  <!-- LessonProgress -->
+  <h3 id="tbl-lessonprogress">LessonProgress</h3>
+  <p>The primary progress unit. One row per lesson per enrollment. Owns both completion gates (content and homework), the <code>completion_source</code> that distinguishes online from offline, and the <code>viewed_required_count</code> counter that avoids cross-domain queries in the hot path.</p>
+
+  <div class="schema-block">
+    <div class="schema-header amber">
+      <h4>progress_lessonprogress</h4>
+      <span>Primary progress unit · both gates · online/offline source · snapshot counters</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">enrollment</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ <code>courses_courseenrollment.id</code>, PROTECT.</td></tr>
+      <tr><td class="field-name">lesson_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-fk">FK</span></td><td class="field-notes">→ <code>courses_lesson.id</code>, PROTECT (same DB monolith).</td></tr>
+      <tr><td class="field-name">module_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-den">DENORM</span></td><td class="field-notes">Copied from lesson.module_id. Enables fast module completion check.</td></tr>
+      <tr><td class="field-name">course_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-den">DENORM</span></td><td class="field-notes">Copied from lesson.module.course_id.</td></tr>
+      <tr><td class="field-name">status</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL DEFAULT 'locked'</td><td class="field-notes"><code>locked</code> | <code>unlocked</code> | <code>in_progress</code> | <code>completed</code>.</td></tr>
+      <tr><td class="field-name">completion_source</td><td class="field-type">VARCHAR(30)</td><td>NULLABLE</td><td class="field-notes"><code>student_activity</code> | <code>mentor_attendance</code> | <code>admin_override</code>. NULL until lesson is completed. This field is the single differentiator for online vs offline learning.</td></tr>
+      <tr><td class="field-name">lesson_order</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Snapshot of <code>Lesson.order</code> at enrollment time. Used for sequential unlock logic. Updated on <code>LessonsReordered</code> event.</td></tr>
+      <tr><td class="field-name">required_content_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Snapshot: count of <code>is_required=TRUE</code> LessonContent items at unlock time. Updated when content items added/removed/changed.</td></tr>
+      <tr><td class="field-name">viewed_required_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 0</td><td class="field-notes">Counter: incremented when a required content item is viewed for the first time. Decremented if that content item is later deleted from the lesson. Combined with <code>required_content_count</code> to evaluate the content gate without any cross-domain query.</td></tr>
+      <tr><td class="field-name">homework_required</td><td class="field-type">BOOLEAN</td><td>NOT NULL DEFAULT FALSE</td><td class="field-notes">Snapshot: TRUE if <code>LessonHomework</code> exists at unlock time. Updated on <code>HomeworkAdded</code> / <code>HomeworkRemoved</code> events from Learning Domain.</td></tr>
+      <tr><td class="field-name">homework_submitted</td><td class="field-type">BOOLEAN</td><td>NOT NULL DEFAULT FALSE</td><td class="field-notes">Set TRUE when <code>HomeworkSubmitted</code> event received from Submissions Domain. Gate flag only — submission details live in Submissions Domain.</td></tr>
+      <tr><td class="field-name">homework_submitted_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Timestamp from the <code>HomeworkSubmitted</code> event payload.</td></tr>
+      <tr><td class="field-name">unlocked_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when status transitions from <code>locked</code> → <code>unlocked</code>.</td></tr>
+      <tr><td class="field-name">started_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set on first content view (first <code>LessonContentView</code> insert for this lesson). Analytics uses this for time-to-complete calculations.</td></tr>
+      <tr><td class="field-name">completed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when both gates pass (or when mentor/admin override).</td></tr>
+    </table>
+  </div>
+
+  <pre>-- Indexes
+CREATE UNIQUE INDEX uq_lessonprogress_enr_lesson  ON progress_lessonprogress (enrollment_id, lesson_id);
+CREATE INDEX idx_lessonprogress_enr_module         ON progress_lessonprogress (enrollment_id, module_id, lesson_order);
+CREATE INDEX idx_lessonprogress_status             ON progress_lessonprogress (enrollment_id, status);
+-- Used by LessonDeleted event handler (update all affected rows)
+CREATE INDEX idx_lessonprogress_lesson_id          ON progress_lessonprogress (lesson_id);
+
+-- Constraints
+ALTER TABLE progress_lessonprogress
+  ADD CONSTRAINT chk_lp_status    CHECK (status IN ('locked','unlocked','in_progress','completed')),
+  ADD CONSTRAINT chk_lp_source    CHECK (completion_source IN ('student_activity','mentor_attendance','admin_override') OR completion_source IS NULL),
+  ADD CONSTRAINT chk_lp_counts    CHECK (viewed_required_count &lt;= required_content_count + 1), -- +1 tolerance for concurrent updates
+  ADD CONSTRAINT chk_lp_complete  CHECK (completed_at IS NULL OR status = 'completed'),
+  ADD CONSTRAINT chk_lp_hw_gate   CHECK (NOT homework_submitted OR homework_required); -- can't submit if not required</pre>
+
+  <hr>
+
+  <!-- LessonContentView -->
+  <h3 id="tbl-contentview">LessonContentView</h3>
+  <p>A lightweight tracking record — not a progress entity. Records that a student viewed a specific content item. Used to drive the <code>viewed_required_count</code> counter on <code>LessonProgress</code> and to provide per-item view data to Analytics. Content items can be hard-deleted in the Learning Domain, so <code>content_id</code> is a soft reference (no FK).</p>
+
+  <div class="schema-block">
+    <div class="schema-header gray">
+      <h4>progress_lessoncontentview</h4>
+      <span>Tracking record only · no lifecycle · soft content reference · video resume</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">enrollment</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span></td><td class="field-notes">→ <code>courses_courseenrollment.id</code>, CASCADE. Deleting enrollment deletes view history.</td></tr>
+      <tr><td class="field-name">content_id</td><td class="field-type">UUID</td><td>NOT NULL <span class="badge badge-soft">SOFT REF</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">References <code>courses_lessoncontent.id</code>. <strong>No DB FK.</strong> Content items can be hard-deleted in Learning Domain. Row is preserved for audit; <code>LessonProgressService</code> decrements <code>viewed_required_count</code> via <code>LessonContentDeleted</code> event.</td></tr>
+      <tr><td class="field-name">lesson_progress</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span></td><td class="field-notes">→ <code>progress_lessonprogress.id</code>, CASCADE. Links view record to the correct progress row for fast aggregation.</td></tr>
+      <tr><td class="field-name">is_required</td><td class="field-type">BOOLEAN</td><td>NOT NULL</td><td class="field-notes">Snapshot: was this content item <code>is_required</code> at the time it was first viewed? Used by Analytics to distinguish required vs optional consumption.</td></tr>
+      <tr><td class="field-name">first_viewed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL DEFAULT now()</td><td class="field-notes">Immutable after creation.</td></tr>
+      <tr><td class="field-name">last_viewed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL DEFAULT now()</td><td class="field-notes">Updated on every subsequent view of the same content item.</td></tr>
+      <tr><td class="field-name">view_count</td><td class="field-type">SMALLINT</td><td>NOT NULL DEFAULT 1</td><td class="field-notes">Incremented on re-view. Useful for Analytics (which lessons require re-watching).</td></tr>
+      <tr><td class="field-name">last_position_seconds</td><td class="field-type">INT</td><td>NULLABLE</td><td class="field-notes">For <code>type=video</code> or <code>type=recording</code> content. Updated on pause/close. Enables "resume from position" feature. NULL for non-video content.</td></tr>
+    </table>
+  </div>
+
+  <pre>-- One row per content item per enrollment (upsert on re-view)
+CREATE UNIQUE INDEX uq_contentview_enr_content ON progress_lessoncontentview (enrollment_id, content_id);
+CREATE INDEX idx_contentview_lesson_progress   ON progress_lessoncontentview (lesson_progress_id);</pre>
+
+  <div class="callout warning">
+    <strong>Why no FK from LessonContentView to LessonContent?</strong> LessonContent items are hard-deleted in the Learning Domain (by design — they are replaced, not archived). A hard FK would either block the delete or CASCADE-delete the view record. We want to preserve the view audit for analytics even after content is removed. Instead, the <code>LessonContentDeleted</code> event drives a compensating update to <code>LessonProgress.viewed_required_count</code>.
+  </div>
+
+  <hr>
+
+  <!-- ERD -->
+  <h3 id="erd">ERD Relationships</h3>
+  <div class="erd-container">
+    <div class="erd-section">
+      <h5>Cross-Domain References (real FK — same monolith DB)</h5>
+      <div class="erd-row">
+        <div class="erd-box ext">accounts_user</div>
+        <div class="erd-line">─ user_id ─────────────────▶</div>
+        <div class="erd-box prog">CourseProgress</div>
+        <div class="erd-line">&nbsp;&nbsp;denormalized, via enrollment</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">courses_courseenrollment</div>
+        <div class="erd-line">─ FK (1:1) ────────────────▶</div>
+        <div class="erd-box prog">CourseProgress</div>
+        <div class="erd-line">&nbsp;&nbsp;PROTECT</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">courses_courseenrollment</div>
+        <div class="erd-line">─ FK (1:N) ────────────────▶</div>
+        <div class="erd-box prog">ModuleProgress</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">courses_courseenrollment</div>
+        <div class="erd-line">─ FK (1:N) ────────────────▶</div>
+        <div class="erd-box gate">LessonProgress</div>
+      </div>
+    </div>
+    <div class="erd-section">
+      <h5>Internal Hierarchy</h5>
+      <div class="erd-row">
+        <div class="erd-box prog">CourseProgress</div>
+        <div class="erd-line">&nbsp;1 ──────────── N ▶</div>
+        <div class="erd-box prog">ModuleProgress</div>
+        <div class="erd-line">&nbsp;1 ──────────── N ▶</div>
+        <div class="erd-box gate">LessonProgress</div>
+        <div class="erd-line">&nbsp;1 ──────────── N ▶</div>
+        <div class="erd-box" style="border-color:var(--gray);color:var(--gray)">LessonContentView</div>
+      </div>
+    </div>
+    <div class="erd-section" style="margin-bottom:0">
+      <h5>Cross-Domain event triggers (no DB FK)</h5>
+      <div class="erd-row">
+        <div class="erd-box ext">HomeworkSubmitted</div>
+        <div class="erd-line">── sets ──▶</div>
+        <div class="erd-box gate">LessonProgress.homework_submitted</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">ModuleAssessmentPassed</div>
+        <div class="erd-line">── sets ──▶</div>
+        <div class="erd-box prog">ModuleProgress.assessment_passed</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">AttendanceMarked (future)</div>
+        <div class="erd-line">── sets ──▶</div>
+        <div class="erd-box gate">LessonProgress.completion_source = mentor_attendance</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ STRATEGY ═══════════ -->
+<section id="strategy">
+  <h2>Progress Calculation Strategy <span class="tag">SECTION 3</span></h2>
+  <p>The calculation strategy defines exactly how state transitions happen, what triggers each transition, and how the cascade works from lesson → module → course. Everything is synchronous within a single <code>atomic()</code> transaction. Domain events are dispatched <em>after</em> commit.</p>
+
+  <!-- State machines -->
+  <h3 id="statemachines">State Machines</h3>
+
+  <h4>LessonProgress</h4>
+  <div class="sm-wrap">
+    <div class="sm-label">Lesson state transitions</div>
+    <div class="sm-row">
+      <div class="sm-state locked">locked</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">prev lesson completed OR first in module (non-sequential: on init)</span></div>
+      <div class="sm-state unlocked">unlocked</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">first content view recorded</span></div>
+      <div class="sm-state active">in_progress</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">content gate AND homework gate both pass</span></div>
+      <div class="sm-state done">completed ✓</div>
+    </div>
+    <div style="margin-top:8px; font-size:12px; color:var(--text-muted)">
+      <strong>Admin shortcut:</strong> <code>locked | unlocked | in_progress</code> → <code>completed</code> via <code>admin_override</code> (skips gate checks).<br>
+      <strong>Offline shortcut:</strong> <code>unlocked</code> → <code>completed</code> via <code>mentor_attendance</code> (both gates bypassed — attendance IS completion).
+    </div>
+  </div>
+
+  <h4>ModuleProgress</h4>
+  <div class="sm-wrap">
+    <div class="sm-label">Module state transitions</div>
+    <div class="sm-row">
+      <div class="sm-state locked">locked</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">prev module completed OR first module (on enrollment init)</span></div>
+      <div class="sm-state unlocked">unlocked</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">any lesson starts</span></div>
+      <div class="sm-state active">in_progress</div>
+    </div>
+    <div class="sm-row" style="margin-top:6px; padding-left:200px;">
+      <div class="sm-state active" style="opacity:0.4">in_progress</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">all lessons done + assessment_required=FALSE</span></div>
+      <div class="sm-state done">completed ✓</div>
+    </div>
+    <div class="sm-row" style="margin-top:6px; padding-left:200px;">
+      <div class="sm-state active" style="opacity:0.4">in_progress</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">all lessons done + assessment_required=TRUE</span></div>
+      <div class="sm-state pending">assessment_pending</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">assessment_passed event received</span></div>
+      <div class="sm-state done">completed ✓</div>
+    </div>
+  </div>
+
+  <h4>CourseProgress</h4>
+  <div class="sm-wrap">
+    <div class="sm-label">Course state transitions</div>
+    <div class="sm-row">
+      <div class="sm-state locked" style="background:var(--accent-light); color:var(--accent);">not_started</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">first lesson view</span></div>
+      <div class="sm-state active">in_progress</div>
+      <div class="sm-arrow"><span class="sm-line">──▶</span><span class="sm-cond">all modules completed → triggers EnrollmentCompleted</span></div>
+      <div class="sm-state done">completed ✓</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Gates -->
+  <h3 id="gates">Completion Gates</h3>
+  <p>A lesson has two gates (online) or one gate override (offline). Both must pass for lesson completion in online mode.</p>
+
+  <div class="gate-grid">
+    <div class="gate-card content">
+      <h4>Content Gate — Online</h4>
+      <p>Passes when <code>required_content_count == 0</code> (lesson has no required content items) OR <code>viewed_required_count >= required_content_count</code>. The counter avoids cross-domain queries: it's incremented when a required content item is viewed and decremented when a required content item is deleted from the lesson.</p>
+    </div>
+    <div class="gate-card homework">
+      <h4>Homework Gate — Online</h4>
+      <p>Passes when <code>homework_required == FALSE</code> (lesson has no homework) OR <code>homework_submitted == TRUE</code>. The flag is set by the <code>HomeworkSubmitted</code> event from the Submissions Domain. Gate tracks <em>submission</em> only — grading and review belong to Submissions/Mentor domains.</p>
+    </div>
+    <div class="gate-card attendance">
+      <h4>Attendance Override — Offline</h4>
+      <p>When <code>enrollment.delivery_format == 'offline'</code> and a <code>AttendanceMarked</code> event is received for this student + lesson, <strong>both content and homework gates are bypassed</strong>. The lesson is immediately marked <code>completed</code> with <code>completion_source = 'mentor_attendance'</code>. The mentor's marking is the authoritative completion signal for offline students.</p>
+    </div>
+    <div class="gate-card assessment">
+      <h4>Assessment Gate — Module Level</h4>
+      <p>Blocks module completion (not lesson completion). Active only when <code>ModuleProgress.assessment_required == TRUE</code>. Passes when <code>ModuleAssessmentPassed</code> event received from Assessment Domain. While in <code>assessment_pending</code> state, the next module remains <code>locked</code>. The assessment itself is owned by Assessment Domain — UserProgress only stores the boolean result.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Algorithms -->
+  <h3 id="algorithms">Completion Algorithms</h3>
+  <p>All three algorithms run synchronously within a single atomic transaction. Events are dispatched post-commit via Django signals.</p>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 1 — record_content_view(enrollment_id, content_id)</h4></div>
+    <div class="algo-body">
+<pre>1. UPSERT LessonContentView(enrollment_id, content_id):
+     - IF new row:
+         - SET first_viewed_at = now()
+         - IF content.is_required:
+             - INCREMENT LessonProgress.viewed_required_count
+             - IF LessonProgress.status == 'unlocked':
+                 SET LessonProgress.status = 'in_progress'
+                 SET LessonProgress.started_at = now()
+                 UPDATE CourseProgress.started_at (if null)
+                 EMIT LessonStarted
+     - IF existing row:
+         - UPDATE last_viewed_at = now(), view_count += 1
+         - UPDATE last_position_seconds (if provided)
+
+2. UPDATE CourseProgress.last_activity_at = now()
+   UPDATE ModuleProgress.last_activity_at = now()
+
+3. CALL _check_lesson_completion(enrollment_id, lesson_id)</pre>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 2 — _check_lesson_completion(enrollment_id, lesson_id)  [internal]</h4></div>
+    <div class="algo-body">
+<pre>lp = LessonProgress.get(enrollment_id, lesson_id)
+
+IF lp.status == 'completed':
+    RETURN  -- already done, idempotent guard
+
+content_gate = (lp.required_content_count == 0)
+               OR (lp.viewed_required_count >= lp.required_content_count)
+
+homework_gate = (NOT lp.homework_required)
+                OR (lp.homework_submitted == TRUE)
+
+IF content_gate AND homework_gate:
+    lp.status            = 'completed'
+    lp.completed_at      = now()
+    lp.completion_source = 'student_activity'
+
+    EMIT LessonCompleted { lesson_id, enrollment_id, course_id, module_id, completed_at }
+
+    -- Cascade step 1: unlock next lesson
+    CALL _unlock_next_lesson(enrollment_id, lesson_id)
+
+    -- Cascade step 2: check module
+    CALL _check_module_completion(enrollment_id, lp.module_id)</pre>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 3 — _check_module_completion(enrollment_id, module_id)  [internal]</h4></div>
+    <div class="algo-body">
+<pre>mp = ModuleProgress.get(enrollment_id, module_id)
+
+IF mp.status == 'completed':
+    RETURN  -- idempotent guard
+
+-- Increment completed count
+UPDATE ModuleProgress
+   SET completed_lessons_count = completed_lessons_count + 1
+ WHERE enrollment_id = enrollment_id AND module_id = module_id
+
+mp.refresh()  -- re-fetch after update
+
+all_lessons_done = (mp.completed_lessons_count >= mp.total_lessons_count
+                    AND mp.total_lessons_count > 0)
+
+IF NOT all_lessons_done:
+    RETURN  -- still lessons remaining
+
+-- All lessons done — check assessment gate
+IF mp.assessment_required AND NOT mp.assessment_passed:
+    SET mp.status = 'assessment_pending'
+    EMIT ModuleAssessmentUnlocked { module_id, enrollment_id, course_id }
+    RETURN  -- waiting for AssessmentDomain event
+
+-- No assessment required OR already passed
+SET mp.status       = 'completed'
+SET mp.completed_at = now()
+EMIT ModuleCompleted { module_id, enrollment_id, course_id }
+
+CALL _unlock_next_module(enrollment_id, module_id)
+CALL _check_course_completion(enrollment_id)</pre>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 4 — _check_course_completion(enrollment_id)  [internal]</h4></div>
+    <div class="algo-body">
+<pre>cp = CourseProgress.get(enrollment_id)
+
+IF cp.status == 'completed':
+    RETURN  -- idempotent guard
+
+UPDATE CourseProgress
+   SET completed_modules_count = completed_modules_count + 1
+ WHERE enrollment_id = enrollment_id
+
+cp.refresh()
+
+IF cp.completed_modules_count >= cp.total_modules_count AND cp.total_modules_count > 0:
+    SET cp.status       = 'completed'
+    SET cp.completed_at = now()
+    EMIT CourseCompleted { enrollment_id, user_id, course_id, completed_at }
+
+    -- Cross-domain call: Learning Domain
+    CourseEnrollmentService.complete_enrollment(enrollment_id, actor='system')</pre>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 5 — _unlock_next_lesson(enrollment_id, lesson_id)  [internal]</h4></div>
+    <div class="algo-body">
+<pre>current_lp  = LessonProgress.get(enrollment_id, lesson_id)
+enrollment  = CourseEnrollment.get(enrollment_id)
+course      = Course.get(enrollment.course_id)
+
+IF NOT course.is_sequential:
+    RETURN  -- non-sequential: all lessons already unlocked at init
+
+-- Find next lesson in same module (by lesson_order)
+next_lp = LessonProgress.objects
+           .filter(enrollment_id=enrollment_id,
+                   module_id=current_lp.module_id,
+                   lesson_order=current_lp.lesson_order + 1,
+                   status='locked')
+           .first()
+
+IF next_lp:
+    SET next_lp.status     = 'unlocked'
+    SET next_lp.unlocked_at = now()
+    EMIT LessonUnlocked { lesson_id: next_lp.lesson_id, enrollment_id }
+    RETURN
+
+-- No more lessons in this module; module will be handled by _check_module_completion</pre>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>Algorithm 6 — handle_assessment_passed(enrollment_id, module_id)  [event handler]</h4></div>
+    <div class="algo-body">
+<pre>mp = ModuleProgress.get(enrollment_id, module_id)
+
+SET mp.assessment_passed    = TRUE
+SET mp.assessment_passed_at = now()
+
+IF mp.status == 'assessment_pending':
+    -- All lessons were already done, only assessment was blocking
+    SET mp.status       = 'completed'
+    SET mp.completed_at = now()
+    EMIT ModuleCompleted
+    CALL _unlock_next_module(enrollment_id, module_id)
+    CALL _check_course_completion(enrollment_id)
+
+-- If status is NOT 'assessment_pending', lessons aren't all done yet.
+-- Flag is stored; _check_module_completion will pick it up when lessons finish.</pre>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Initialisation -->
+  <h3 id="init">Progress Initialisation</h3>
+  <p>Called by <code>ProgressInitialisationService</code> when <code>StudentEnrolled</code> event is received. Must be idempotent — if called twice, it must not create duplicate rows.</p>
+
+  <div class="algo-block">
+    <div class="algo-header"><h4>initialise_progress(enrollment_id)  [called on StudentEnrolled event]</h4></div>
+    <div class="algo-body">
+<pre>enrollment = CourseEnrollment.get(enrollment_id)
+course     = Course.get(enrollment.course_id)
+
+-- 1. Create CourseProgress (get_or_create, idempotent)
+cp = CourseProgress.get_or_create(
+       enrollment_id  = enrollment_id,
+       course_id      = enrollment.course_id,
+       user_id        = enrollment.user_id,
+       total_modules_count = Module.count(course_id, is_published=True, deleted_at=None)
+     )
+
+-- 2. For each published, non-deleted module (ordered by order):
+FOR i, module IN ENUMERATE(modules):
+    mp = ModuleProgress.get_or_create(
+           enrollment_id     = enrollment_id,
+           module_id         = module.id,
+           course_id         = course.id,
+           module_order      = module.order,
+           status            = 'unlocked' IF (i == 0 OR NOT course.is_sequential) ELSE 'locked',
+           unlocked_at       = now() IF i == 0 ELSE None,
+           total_lessons_count = Lesson.count(module_id, is_published=True, deleted_at=None),
+           assessment_required = AssessmentSelector.module_has_assessment(module.id)
+         )
+
+    -- 3. For each published, non-deleted lesson in module (ordered by order):
+    FOR j, lesson IN ENUMERATE(lessons_in_module):
+        is_first = (i == 0 AND j == 0)
+        LessonProgress.get_or_create(
+          enrollment_id         = enrollment_id,
+          lesson_id             = lesson.id,
+          module_id             = module.id,
+          course_id             = course.id,
+          lesson_order          = lesson.order,
+          status                = 'unlocked' IF (is_first OR NOT course.is_sequential) ELSE 'locked',
+          unlocked_at           = now() IF (is_first OR NOT course.is_sequential) ELSE None,
+          required_content_count = LessonContent.count(lesson_id, is_required=True),
+          homework_required     = LessonHomework.exists(lesson_id)
+        )
+
+NOTE: AssessmentSelector.module_has_assessment() is a cross-domain read at init time only.
+All subsequent progress checks use only UserProgress tables.</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SELECTORS ═══════════ -->
+<section id="selectors">
+  <h2>Selectors — Read Layer <span class="tag">SECTION 4</span></h2>
+  <p>Three selectors. They never mutate state. All return querysets or Python dicts. The most important design rule: <strong>selectors must never trigger completion checks</strong>. Reading progress must always be side-effect free.</p>
+
+  <div class="svc-block">
+    <div class="svc-header teal">
+      <h4>CourseProgressSelector</h4>
+      <span>Dashboard + full course progress tree</span>
+    </div>
+    <div class="svc-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Provides the student dashboard view and the full per-course progress breakdown. Most frequently called selector — must be heavily optimised.</p>
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_dashboard(user_id)</span>
+        <span class="method-desc">Returns all <code>active</code> CourseProgress rows for the user, joined with course title + thumbnail, ordered by <code>last_activity_at DESC</code>. Includes completion percentage computed as <code>completed_modules_count / total_modules_count</code>.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_course_progress(enrollment_id)</span>
+        <span class="method-desc">Returns full tree: CourseProgress + all ModuleProgress rows (with lesson counts) + all LessonProgress rows. Used by the course detail page to render progress state per lesson. Uses <code>prefetch_related</code>.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_next_lesson(enrollment_id)</span>
+        <span class="method-desc">Returns the single LessonProgress row with <code>status=unlocked</code> and lowest <code>lesson_order</code> across all modules. Drives the "Continue" button. Falls back to first <code>in_progress</code> if no pure <code>unlocked</code> exists.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_completion_percentage(enrollment_id)</span>
+        <span class="method-desc">Returns an integer 0–100. Uses <code>completed_modules_count / total_modules_count</code> from CourseProgress. If total is 0, returns 0. Single-row read — no joins needed.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="svc-block">
+    <div class="svc-header amber">
+      <h4>LessonProgressSelector</h4>
+      <span>Lesson-level state + unlock status</span>
+    </div>
+    <div class="svc-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Provides lesson-level progress state used by the lesson view page to show which content items were viewed, whether homework was submitted, and whether the lesson is locked.</p>
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_lesson_progress(enrollment_id, lesson_id)</span>
+        <span class="method-desc">Returns single LessonProgress row with all gate fields. View layer combines this with <code>LessonSelector.get_lesson_detail()</code> from Learning Domain to build the full lesson page.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_module_lessons_progress(enrollment_id, module_id)</span>
+        <span class="method-desc">Returns all LessonProgress rows for a module, ordered by <code>lesson_order</code>. Used to render the module sidebar showing which lessons are done, in progress, locked.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_viewed_content_ids(enrollment_id, lesson_id)</span>
+        <span class="method-desc">Returns set of <code>content_id</code> UUIDs viewed by this student for this lesson. Used by view layer to mark which content items have a "viewed" indicator. Queries <code>LessonContentView</code>.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_video_position(enrollment_id, content_id)</span>
+        <span class="method-desc">Returns <code>last_position_seconds</code> for a specific content item. Called by video player on load for resume-from-position.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">is_lesson_accessible(enrollment_id, lesson_id)</span>
+        <span class="method-desc">Fast boolean check: returns TRUE if <code>status IN ('unlocked','in_progress','completed')</code>. Used as permission gate before serving lesson content. Cached per request.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="svc-block">
+    <div class="svc-header sky">
+      <h4>ProgressAnalyticsSelector</h4>
+      <span>Read models for Analytics domain — never called by student-facing views</span>
+    </div>
+    <div class="svc-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Provides aggregated progress data to the Analytics domain. These queries are heavier (GROUP BY, annotations) and must never run in the request/response cycle for students. Called by background tasks or Analytics domain services only.</p>
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_course_completion_stats(course_id)</span>
+        <span class="method-desc">Returns: total_enrolled, total_completed, completion_rate %, average_days_to_complete. Used by Analytics domain to populate course-level metrics.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_lesson_funnel(course_id)</span>
+        <span class="method-desc">Returns per-lesson: total_started, total_completed, avg_days_to_complete, dropout_rate. Ordered by module + lesson. Used for identifying where students drop off.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_student_progress_snapshot(enrollment_id)</span>
+        <span class="method-desc">Full progress snapshot for a single student: all LessonProgress + timestamps. Used by mentor dashboards to show a single student's timeline through the course.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SERVICES ═══════════ -->
+<section id="services">
+  <h2>Services — Write Layer <span class="tag">SECTION 5</span></h2>
+  <p>Four services, each owning one layer of the hierarchy. All mutating methods run in <code>transaction.atomic()</code>. Domain events dispatched post-commit via <code>transaction.on_commit()</code>.</p>
+
+  <div class="callout warning">
+    <strong>Cascade ownership:</strong> Only <code>LessonProgressService</code> may call <code>_check_module_completion</code>. Only <code>ModuleProgressService</code> may call <code>_check_course_completion</code>. No service skips levels. This prevents circular triggers and makes the cascade traceable in logs.
+  </div>
+
+  <hr>
+
+  <div id="svc-init" class="svc-block">
+    <div class="svc-header gray">
+      <h4>ProgressInitialisationService</h4>
+      <span>Bootstraps all progress rows on enrollment · handles late content additions</span>
+    </div>
+    <div class="svc-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">initialise_progress(enrollment_id)</span><span class="method-desc">Full initialisation from Learning Domain structure. Idempotent (get_or_create). See Algorithm 5 in Section 3. Called by <code>StudentEnrolled</code> event handler.</span></div>
+      <div class="method-row"><span class="method-name">handle_lesson_published(enrollment_id, lesson_id)</span><span class="method-desc">Adds a new <code>LessonProgress</code> row (status=<code>locked</code>) to all active enrollments for the course when a new lesson is published. Increments <code>ModuleProgress.total_lessons_count</code> and <code>CourseProgress</code> counts if needed. Called by <code>LessonPublished</code> event.</span></div>
+      <div class="method-row"><span class="method-name">handle_lesson_deleted(lesson_id)</span><span class="method-desc">Soft-marks LessonProgress as <code>stale=TRUE</code> (add a <code>is_stale</code> boolean). Does NOT delete progress rows — Analytics needs historical data. Decrements <code>ModuleProgress.total_lessons_count</code>. May trigger <code>_check_module_completion</code> if the deleted lesson was the last incomplete one.</span></div>
+      <div class="method-row"><span class="method-name">handle_content_deleted(lesson_id, content_id, was_required)</span><span class="method-desc">If <code>was_required=TRUE</code>: decrements <code>LessonProgress.required_content_count</code> for all affected rows. Also decrements <code>viewed_required_count</code> for rows that had a LessonContentView for this content. Then calls <code>_check_lesson_completion</code> for each affected row — deletion of required content may unblock a student.</span></div>
+      <div class="method-row"><span class="method-name">handle_assessment_added(module_id)</span><span class="method-desc">Sets <code>ModuleProgress.assessment_required=TRUE</code> for all active enrollments in this module. If any module is currently <code>in_progress</code> with all lessons done, transitions it to <code>assessment_pending</code>.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-INIT-01</span><span class="method-desc">All initialisation uses get_or_create. Duplicate StudentEnrolled event delivery must not create duplicate progress rows.</span></div>
+      <div class="method-row"><span class="method-name">BR-INIT-02</span><span class="method-desc">Stale LessonProgress rows (from deleted lessons) are never deleted. They carry <code>is_stale=TRUE</code> and are excluded from completion counts and UI display but preserved for Analytics.</span></div>
+    </div>
+  </div>
+
+  <div id="svc-lesson" class="svc-block">
+    <div class="svc-header amber">
+      <h4>LessonProgressService</h4>
+      <span>Content views · homework gate · offline completion · overrides</span>
+    </div>
+    <div class="svc-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">record_content_view(enrollment_id, content_id, position_seconds)</span><span class="method-desc">Core hot-path method. See Algorithm 1 in Section 3. Validates student is enrolled and lesson is accessible (<code>status != locked</code>) before writing.</span></div>
+      <div class="method-row"><span class="method-name">handle_homework_submitted(enrollment_id, lesson_id)</span><span class="method-desc">Called by <code>HomeworkSubmitted</code> event from Submissions Domain. Sets <code>homework_submitted=TRUE</code>, stamps <code>homework_submitted_at</code>. Calls <code>_check_lesson_completion</code>.</span></div>
+      <div class="method-row"><span class="method-name">handle_attendance_marked(enrollment_id, lesson_id, session_id)</span><span class="method-desc">Called by <code>AttendanceMarked</code> event (future Mentorship Domain). Bypasses content and homework gates. Directly sets <code>status=completed</code>, <code>completion_source=mentor_attendance</code>. Then calls <code>_check_module_completion</code>.</span></div>
+      <div class="method-row"><span class="method-name">override_lesson_complete(enrollment_id, lesson_id, actor)</span><span class="method-desc">Admin/Staff override. Sets <code>status=completed</code>, <code>completion_source=admin_override</code>, skips all gate checks. Requires actor to have Admin role. Calls <code>_check_module_completion</code>.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-LP-01</span><span class="method-desc"><code>record_content_view</code> is rejected with <code>PermissionDenied</code> if <code>LessonProgress.status == 'locked'</code>. A student cannot view content for a locked lesson.</span></div>
+      <div class="method-row"><span class="method-name">BR-LP-02</span><span class="method-desc">Completion is immutable. Once <code>status=completed</code>, no method may revert it. Completion is a terminal state.</span></div>
+      <div class="method-row"><span class="method-name">BR-LP-03</span><span class="method-desc">For offline students, <code>handle_attendance_marked</code> is the ONLY completion path. <code>record_content_view</code> still works (students can view content) but the content gate is not evaluated for completion — only attendance matters.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">LessonStarted</span><span class="method-desc">enrollment_id, lesson_id, course_id, started_at</span></div>
+      <div class="method-row"><span class="method-name">LessonCompleted</span><span class="method-desc">enrollment_id, lesson_id, module_id, course_id, completion_source, completed_at</span></div>
+      <div class="method-row"><span class="method-name">LessonUnlocked</span><span class="method-desc">enrollment_id, lesson_id, unlocked_at</span></div>
+    </div>
+  </div>
+
+  <div id="svc-module" class="svc-block">
+    <div class="svc-header accent">
+      <h4>ModuleProgressService</h4>
+      <span>Module transitions · assessment gate · next module unlock</span>
+    </div>
+    <div class="svc-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">handle_assessment_passed(enrollment_id, module_id)</span><span class="method-desc">Called by <code>ModuleAssessmentPassed</code> event from Assessment Domain. See Algorithm 6 in Section 3. If module was in <code>assessment_pending</code>, completes it and cascades.</span></div>
+      <div class="method-row"><span class="method-name">handle_module_completed(enrollment_id, module_id)</span><span class="method-desc">Internal method called only by <code>LessonProgressService._check_module_completion</code>. Increments <code>CourseProgress.completed_modules_count</code> and calls <code>_check_course_completion</code>.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-MP-01</span><span class="method-desc">A module cannot transition to <code>completed</code> if <code>total_lessons_count == 0</code>. A module with no published lessons cannot be completed — it is ignored in course completion calculation.</span></div>
+      <div class="method-row"><span class="method-name">BR-MP-02</span><span class="method-desc">Assessment passing is stored even if module lessons aren't done yet. When lessons complete later, the stored <code>assessment_passed=TRUE</code> allows immediate completion without waiting for another event.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">ModuleCompleted</span><span class="method-desc">enrollment_id, module_id, course_id, completed_at</span></div>
+      <div class="method-row"><span class="method-name">ModuleAssessmentUnlocked</span><span class="method-desc">enrollment_id, module_id, course_id — signals that student should take the module assessment</span></div>
+    </div>
+  </div>
+
+  <div id="svc-course" class="svc-block">
+    <div class="svc-header teal">
+      <h4>CourseProgressService</h4>
+      <span>Course completion · EnrollmentCompleted cross-domain call</span>
+    </div>
+    <div class="svc-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">handle_course_completed(enrollment_id)</span><span class="method-desc">Internal. Called only by <code>ModuleProgressService.handle_module_completed</code>. See Algorithm 4. Calls <code>CourseEnrollmentService.complete_enrollment(enrollment_id)</code> from Learning Domain after commit. This is the only cross-domain write call in the UserProgress domain.</span></div>
+      <div class="method-row"><span class="method-name">handle_enrollment_dropped(enrollment_id)</span><span class="method-desc">Called by <code>EnrollmentDropped</code> event. Marks <code>CourseProgress.status</code> and all child <code>LessonProgress</code> rows as read-only (sets <code>is_active=FALSE</code> — add this boolean). Does NOT delete — history is preserved for Analytics.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-CP-01</span><span class="method-desc">Course completion is idempotent. If <code>CourseProgress.status == 'completed'</code>, the <code>handle_course_completed</code> call does nothing. This prevents double-firing of <code>EnrollmentCompleted</code>.</span></div>
+      <div class="method-row"><span class="method-name">BR-CP-02</span><span class="method-desc"><code>CourseEnrollmentService.complete_enrollment</code> is called via <code>transaction.on_commit()</code>, not inside the atomic block. This ensures Learning Domain writes only after UserProgress writes are committed.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">CourseCompleted</span><span class="method-desc">enrollment_id, user_id, course_id, completed_at — consumed by Notification, Analytics, Certification domains</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ API ═══════════ -->
+<section id="api">
+  <h2>API Contracts <span class="tag">SECTION 6</span></h2>
+  <p>All UserProgress endpoints require authentication. Students can only access their own progress. Staff and Admin can access any student's progress. Mentor can access progress of students in their groups only.</p>
+
+  <div class="callout sky">
+    <strong>Read pattern:</strong> The lesson detail page combines two domain reads in the view layer: <code>GET /learning/lessons/{id}/</code> (content definition) + <code>GET /progress/lessons/{id}/</code> (progress state). The API gateway or BFF composes these. Neither domain knows about the other's response.
+  </div>
+
+  <!-- Dashboard -->
+  <h3>Student Dashboard</h3>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-get">GET</span>
+      <span class="ep-path">/progress/me/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student · Dashboard view · UC-09</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Query Params</h6>
+        <pre>status: active|completed|dropped (optional)
+page: int (default 1)</pre>
+        <h6>Notes</h6>
+        <pre>Returns all enrollments for request.user.
+Ordered by last_activity_at DESC.
+Null last_activity_at (never started)
+sorts to the bottom.</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200</h6>
+        <pre>{ results: [{
+  enrollment_id: uuid,
+  course: {
+    id, title, slug, thumbnail_url
+  },
+  status: "active"|"completed",
+  delivery_format: "online"|"offline",
+  completion_percentage: 0-100,
+  completed_modules: int,
+  total_modules: int,
+  last_activity_at: datetime | null,
+  next_lesson: {
+    lesson_id: uuid,
+    lesson_title: str,
+    module_title: str
+  } | null
+}] }</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Authenticated student (own data only)</div>
+  </div>
+
+  <!-- Course progress -->
+  <h3>Course Progress</h3>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-get">GET</span>
+      <span class="ep-path">/progress/courses/{course_id}/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student / Staff · Full progress tree</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Notes</h6>
+        <pre>Resolves enrollment from course_id +
+request.user automatically.
+Staff may pass ?user_id= to view
+a specific student's progress.
+Returns stale lessons with
+is_stale: true (excluded from %)</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200</h6>
+        <pre>{ enrollment_id, course_id,
+  status, completion_percentage,
+  completed_modules, total_modules,
+  started_at, completed_at,
+  last_activity_at,
+  modules: [{
+    module_id, title, order,
+    status, completed_lessons,
+    total_lessons,
+    assessment_required,
+    assessment_passed,
+    completed_at,
+    lessons: [{
+      lesson_id, title, order,
+      status, completion_source,
+      started_at, completed_at,
+      homework_submitted,
+      viewed_required_count,
+      required_content_count,
+      is_stale: bool
+    }]
+  }]
+}</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Enrolled student (own data), Staff/Admin (any student via <code>?user_id=</code>), Mentor (own group students only)</div>
+  </div>
+
+  <!-- Lesson progress -->
+  <h3>Lesson Progress</h3>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-get">GET</span>
+      <span class="ep-path">/progress/lessons/{lesson_id}/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student · Pre-load before lesson view</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Notes</h6>
+        <pre>Called by lesson page before rendering.
+Tells client: which content viewed,
+is homework submitted, is lesson locked.
+Returns 403 if not enrolled.</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200</h6>
+        <pre>{ lesson_id, status,
+  is_accessible: bool,
+  completion_source: str | null,
+  viewed_content_ids: [uuid, ...],
+  video_positions: {
+    content_id: seconds, ...
+  },
+  homework_required: bool,
+  homework_submitted: bool,
+  homework_submitted_at: datetime | null,
+  content_gate_passed: bool,
+  homework_gate_passed: bool,
+  started_at, completed_at
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-post">POST</span>
+      <span class="ep-path">/progress/lessons/{lesson_id}/content/{content_id}/view/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student · Core progress write</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Request Body</h6>
+        <pre>{ position_seconds: int | null
+  -- for video/recording resume
+}</pre>
+        <h6>Notes</h6>
+        <pre>Called frequently (on scroll, pause,
+completion). Must be fast (&lt;100ms).
+Idempotent on duplicate calls.
+Returns 403 if lesson is locked.</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200</h6>
+        <pre>{ viewed: true,
+  lesson_status: "unlocked"|
+    "in_progress"|"completed",
+  content_gate_passed: bool,
+  homework_gate_passed: bool,
+  lesson_just_completed: bool
+  -- client uses this to
+  -- show completion animation
+}</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Enrolled student (own enrollment only)</div>
+  </div>
+
+  <!-- Admin overrides -->
+  <h3>Admin / Mentor Overrides</h3>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-post">POST</span>
+      <span class="ep-path">/progress/enrollments/{enrollment_id}/lessons/{lesson_id}/complete/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Admin / Staff · Override completion</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Request Body</h6>
+        <pre>{ reason: string (required)
+  -- audit trail for override
+}</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200 / Errors</h6>
+        <pre>200: { lesson_id, status: "completed",
+  completion_source: "admin_override",
+  completed_at }
+
+400: "Lesson is already completed"
+403: "Admin role required"</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="ep-block">
+    <div class="ep-hdr">
+      <span class="badge badge-get">GET</span>
+      <span class="ep-path">/progress/courses/{course_id}/students/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff / Admin / Mentor · All student progress</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-col">
+        <h6>Query Params</h6>
+        <pre>status: active|completed|dropped
+delivery_format: online|offline
+page, page_size</pre>
+      </div>
+      <div class="ep-col">
+        <h6>Response 200</h6>
+        <pre>{ results: [{
+  enrollment_id, user_id,
+  full_name, delivery_format,
+  completion_percentage,
+  last_activity_at,
+  status
+}] }</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Staff (all students), Admin (all), Mentor (own group students filtered automatically)</div>
+  </div>
+</section>
+
+<!-- ═══════════ EVENTS CONSUMED ═══════════ -->
+<section id="events-consumed">
+  <h2>Events Consumed <span class="tag">SECTION 7A</span></h2>
+  <p>UserProgress is a pure consumer from all external domains. Each event maps to a specific service method. Handlers must be idempotent — the same event delivered twice must produce the same outcome.</p>
+
+  <h3>From Learning Domain</h3>
+
+  <div class="event-block">
+    <div class="event-hdr sky"><h4>StudentEnrolled</h4><span>Producer: CourseEnrollmentService</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">ProgressInitialisationService
+.initialise_progress(enrollment_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Create CourseProgress row</li><li>Create ModuleProgress rows (all modules)</li><li>Create LessonProgress rows (all lessons)</li><li>Unlock first module + first lesson</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🔴 CRITICAL. If missed, student has no progress rows and cannot view any lesson. Must be processed before student can access the course.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr sky"><h4>EnrollmentDropped</h4><span>Producer: CourseEnrollmentService</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">CourseProgressService
+.handle_enrollment_dropped(enrollment_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Set is_active=FALSE on CourseProgress</li><li>Halt any in-progress completion checks</li><li>Preserve all rows for Analytics</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🟡 MEDIUM. Student loses access via enrollment check — progress deactivation is secondary but important for data hygiene.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr sky"><h4>LessonPublished</h4><span>Producer: LessonService</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">ProgressInitialisationService
+.handle_lesson_published(lesson_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Add LessonProgress row to all active enrolled students</li><li>Increment ModuleProgress.total_lessons_count</li><li>New lesson starts as locked (sequential) or unlocked (non-sequential)</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🟡 MEDIUM. If missed, existing students won't have a progress row for the new lesson and completion percentages will be wrong.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr sky"><h4>LessonDeleted</h4><span>Producer: LessonService</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">ProgressInitialisationService
+.handle_lesson_deleted(lesson_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Mark LessonProgress rows as is_stale=TRUE</li><li>Decrement ModuleProgress.total_lessons_count</li><li>Re-run _check_module_completion (deleted lesson might complete the module)</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🟡 MEDIUM. Stale rows affect completion counts. Analytics preserves historical data. Must not delete rows.</p></div>
+    </div>
+  </div>
+
+  <h3>From Submissions Domain</h3>
+
+  <div class="event-block">
+    <div class="event-hdr accent"><h4>HomeworkSubmitted</h4><span>Producer: Submissions Domain (future)</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">LessonProgressService
+.handle_homework_submitted(
+  enrollment_id, lesson_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Set homework_submitted=TRUE</li><li>Set homework_submitted_at from event</li><li>Call _check_lesson_completion</li><li>May cascade to module + course completion</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🔴 CRITICAL for lessons where homework is the last gate. If missed, student is stuck in <code>in_progress</code> despite having submitted.</p></div>
+    </div>
+  </div>
+
+  <h3>From Assessment Domain</h3>
+
+  <div class="event-block">
+    <div class="event-hdr teal"><h4>ModuleAssessmentPassed</h4><span>Producer: Assessment Domain (future)</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Handler</h6><pre style="font-size:11.5px;margin:0">ModuleProgressService
+.handle_assessment_passed(
+  enrollment_id, module_id)</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>Set assessment_passed=TRUE</li><li>If status=assessment_pending → complete module</li><li>Cascade to next module + course</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🔴 CRITICAL. Without this event, student is permanently stuck in <code>assessment_pending</code>. Zero retries = course never completes.</p></div>
+    </div>
+  </div>
+
+  <h3>From Mentorship Domain (future)</h3>
+
+  <div class="event-block">
+    <div class="event-hdr amber"><h4>AttendanceMarked</h4><span>Producer: Mentorship Domain (offline sessions)</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Expected payload</h6><pre style="font-size:11.5px;margin:0">session_id: UUID
+enrollment_id: UUID
+lesson_ids: [UUID]  -- lessons covered
+attended: bool
+marked_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Action</h6><ul><li>For each lesson_id in lesson_ids where attended=TRUE:</li><li>Call handle_attendance_marked()</li><li>Bypasses content + homework gates</li><li>completion_source = 'mentor_attendance'</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🔴 CRITICAL for offline students. This is their ONLY completion path. Must be robust to duplicate delivery.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ EVENTS PRODUCED ═══════════ -->
+<section id="events-produced">
+  <h2>Events Produced <span class="tag">SECTION 7B</span></h2>
+  <p>All events produced by UserProgress are dispatched via <code>transaction.on_commit()</code> to guarantee they fire only after the state is safely persisted.</p>
+
+  <div class="event-block">
+    <div class="event-hdr amber"><h4>LessonStarted</h4><span>Produced by: LessonProgressService.record_content_view (first view)</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+lesson_id, module_id, course_id
+started_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Analytics — measure time-to-start per lesson</li><li>Notifications — "keep going" nudge after inactivity</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">LOW — advisory. No domain is blocked if missed.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr amber"><h4>LessonCompleted</h4><span>Produced by: LessonProgressService._check_lesson_completion</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+lesson_id, module_id, course_id
+completion_source: str
+completed_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Notifications — "Lesson complete" confirmation</li><li>Analytics — completion funnel, time-to-complete</li><li>Mentorship — update mentor's view of student progress</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">MEDIUM — consumers are read-only/advisory. The cascade to module completion happens synchronously inside the same transaction, not via this event.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr amber"><h4>LessonUnlocked</h4><span>Produced by: LessonProgressService._unlock_next_lesson</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+lesson_id, module_id, course_id
+unlocked_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Notifications — "Next lesson available" push notification</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">LOW — UI already shows unlock via API poll. Push notification is enhancement only.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr accent"><h4>ModuleAssessmentUnlocked</h4><span>Produced by: ModuleProgressService when status → assessment_pending</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+module_id, course_id
+unlocked_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Notifications — "You can now take Module X assessment"</li><li>Assessment Domain (advisory) — student is ready to attempt</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">MEDIUM — student may not see the assessment prompt without this notification. Assessment itself is always accessible via Assessment domain API.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr teal"><h4>ModuleCompleted</h4><span>Produced by: ModuleProgressService</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+module_id, course_id
+completed_at: TIMESTAMPTZ</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Notifications — "Module complete" badge</li><li>Analytics — module completion rate</li><li>Mentorship — mentor notified of student milestone</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">MEDIUM — course completion cascade is synchronous, not event-driven. This event is for external domains only.</p></div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-hdr teal"><h4>CourseCompleted</h4><span>Produced by: CourseProgressService.handle_course_completed</span></div>
+    <div class="event-body">
+      <div class="event-col"><h6>Payload</h6><pre style="font-size:11.5px;margin:0">enrollment_id, user_id
+course_id, course_title
+completed_at: TIMESTAMPTZ
+total_days: int  -- days from enrolled_at</pre></div>
+      <div class="event-col"><h6>Consumers</h6><ul><li>Learning Domain — calls EnrollmentCompleted (synchronous, post-commit)</li><li>Certification Domain — issue certificate</li><li>Notifications — "🎉 You completed the course!"</li><li>Analytics — completion rate, avg duration</li></ul></div>
+      <div class="event-col"><h6>Criticality</h6><p style="font-size:12px;color:var(--text-muted)">🔴 HIGH — Certification domain depends on this. If missed, certificate is never issued. Must have retry/idempotency guarantees.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ANALYTICS ═══════════ -->
+<section id="analytics">
+  <h2>Analytics Dependencies <span class="tag">SECTION 8</span></h2>
+  <p>Analytics is a separate domain that builds read models from UserProgress events. UserProgress <strong>never pushes data into Analytics tables</strong> — it only emits events with sufficient payload for Analytics to maintain its own projections.</p>
+
+  <h3>What Analytics can build from UserProgress events</h3>
+  <table>
+    <tr><th>Metric</th><th>Source</th><th>How computed</th></tr>
+    <tr><td>Lesson completion rate</td><td><code>LessonCompleted</code> events</td><td>count(LessonCompleted where lesson_id=X) / count(StudentEnrolled for course)</td></tr>
+    <tr><td>Avg time to complete lesson</td><td><code>LessonStarted</code> + <code>LessonCompleted</code></td><td>avg(completed_at - started_at) per lesson_id</td></tr>
+    <tr><td>Lesson dropout / stuck rate</td><td><code>LessonStarted</code> with no follow-on <code>LessonCompleted</code></td><td>Students in <code>in_progress</code> > N days</td></tr>
+    <tr><td>Module completion funnel</td><td><code>ModuleCompleted</code></td><td>How many students reach each module</td></tr>
+    <tr><td>Online vs offline completion rate</td><td><code>LessonCompleted.completion_source</code></td><td>Group by completion_source</td></tr>
+    <tr><td>Assessment pass/fail impact</td><td><code>ModuleAssessmentUnlocked</code> + <code>ModuleCompleted</code></td><td>Time gap between events; retry rate from Assessment domain</td></tr>
+    <tr><td>Course completion time</td><td><code>StudentEnrolled</code> + <code>CourseCompleted</code></td><td>completed_at - enrolled_at; <code>total_days</code> already in payload</td></tr>
+    <tr><td>Video re-watch rate</td><td><code>LessonContentView.view_count</code></td><td>ProgressAnalyticsSelector.get_lesson_funnel reads this from UserProgress directly via allowed read interface</td></tr>
+  </table>
+
+  <h3>What Analytics needs that UserProgress does NOT provide</h3>
+  <div class="decision-grid">
+    <div class="decision-card amber">
+      <h4>Time-spent per lesson</h4>
+      <p>UserProgress records <code>started_at</code> and <code>completed_at</code> but not active session time. If a student opens a lesson, leaves, and comes back three days later, time-to-complete ≠ time-spent. A <strong>session heartbeat</strong> mechanism (separate <code>LearningSession</code> table or Analytics-owned) is needed for accurate time-spent. This is deferred — not part of UserProgress v1.</p>
+    </div>
+    <div class="decision-card sky">
+      <h4>Content type engagement</h4>
+      <p>Analytics may want to know: do students who watch videos complete faster than PDF-only students? This requires combining <code>LessonContentView.content_id</code> with Learning Domain's <code>LessonContent.type</code>. Either Analytics does a cross-domain join, or Learning Domain publishes a <code>content_type</code> snapshot on <code>LessonContentDeleted</code> events.</p>
+    </div>
+    <div class="decision-card coral">
+      <h4>Per-question quiz analytics</h4>
+      <p>Which quiz questions cause the most failures? This data lives entirely in Assessment Domain. UserProgress only knows "assessment passed/failed" — it has no question-level data. Analytics must subscribe directly to Assessment Domain events (<code>QuizAttempted</code>, <code>QuestionAnswered</code>).</p>
+    </div>
+    <div class="decision-card teal">
+      <h4>Cohort comparisons</h4>
+      <p>How does offline cohort performance compare to online? Analytics needs <code>delivery_format</code> from <code>CourseEnrollment</code> + completion data from UserProgress. These are in different domains. Analytics should maintain its own denormalized projection combining data from both <code>StudentEnrolled</code> (has delivery_format) and <code>CourseCompleted</code> events.</p>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top:20px">
+    <strong>Analytics access contract:</strong> Analytics domain may call <code>ProgressAnalyticsSelector</code> methods directly (same DB, read-only) for bulk historical queries run as background jobs. It must NOT query UserProgress tables directly via raw SQL — all reads go through the selector layer. This ensures query optimisation stays within the UserProgress domain.
+  </div>
+</section>
+
+<!-- ═══════════ DESIGN DECISIONS ═══════════ -->
+<section id="decisions">
+  <h2>Key Design Decisions <span class="tag">SECTION 9</span></h2>
+
+  <div class="decision-grid">
+    <div class="decision-card teal">
+      <h4>Synchronous cascade, not event-driven</h4>
+      <p>Lesson → Module → Course completion happens in a single atomic transaction, not via emitted events. This avoids race conditions, guarantees order, and makes the cascade debuggable in a single stack trace. External domains (Notifications, Analytics) are notified via post-commit events — these are advisory, not causal.</p>
+    </div>
+    <div class="decision-card amber">
+      <h4>Snapshot counters, not live cross-domain queries</h4>
+      <p><code>required_content_count</code> and <code>total_lessons_count</code> are snapshotted at enrollment time and maintained via events. This means the completion hot path (checking if a lesson is done) only reads UserProgress tables — zero cross-domain queries in the request/response cycle. The trade-off is event-handler complexity to keep counters in sync.</p>
+    </div>
+    <div class="decision-card sky">
+      <h4>completion_source = single differentiator for online/offline</h4>
+      <p>The same four tables handle both delivery formats. The <code>completion_source</code> field records whether completion came from student activity, mentor attendance, or admin override. This means all progress queries, analytics, and UI components work identically for both formats — no branching logic in the view layer.</p>
+    </div>
+    <div class="decision-card coral">
+      <h4>Stale flag instead of delete on lesson removal</h4>
+      <p>When a lesson is deleted from the Learning Domain, its LessonProgress rows are marked <code>is_stale=TRUE</code> rather than deleted. This preserves analytics history, prevents completion percentage from jumping backwards for already-completed students, and allows the deletion to be reverted if the staff member made a mistake. Stale rows are excluded from UI display and completion counts.</p>
+    </div>
+    <div class="decision-card">
+      <h4>Assessment gate at module level, not lesson level</h4>
+      <p><code>LessonQuiz</code> exists in the Learning Domain but is not a completion gate in UserProgress. The lesson quiz is a learning exercise — it's part of the lesson content experience, handled by the Assessment Domain for attempts/grading. The <em>module-level assessment</em> (a separate entity in Assessment Domain) is the gate that controls module completion. This distinction keeps lesson-level completion simple.</p>
+    </div>
+    <div class="decision-card gray">
+      <h4>EnrollmentCompleted called post-commit, not inline</h4>
+      <p><code>CourseEnrollmentService.complete_enrollment()</code> from Learning Domain is called via <code>transaction.on_commit()</code>. This is a cross-domain write call. Running it inside the UserProgress atomic block would create a distributed transaction across two domain service boundaries. Post-commit ensures UserProgress is fully committed before the Learning Domain mutates its own state.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

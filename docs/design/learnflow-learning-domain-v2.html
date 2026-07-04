@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnFlow — Learning Domain Design v2.0</title>
+<style>
+  :root {
+    --accent:
+    --accent-light:
+    --accent-mid:
+    --teal:
+    --teal-light:
+    --coral:
+    --coral-light:
+    --amber:
+    --amber-light:
+    --sky:
+    --sky-light:
+    --gray:
+    --gray-light:
+    --text:
+    --text-muted:
+    --border:
+    --bg:
+    --bg-page:
+    --code-bg:
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg-page);
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  nav {
+    width: 264px;
+    min-width: 264px;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav .logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  nav .logo h1 { font-size: 15px; font-weight: 600; color: var(--accent); }
+  nav .logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  nav a {
+    display: block; padding: 7px 20px; font-size: 13px;
+    color: var(--text-muted); text-decoration: none;
+    border-left: 2px solid transparent; transition: all 0.15s;
+  }
+  nav a:hover { color: var(--accent); background: var(--accent-light); border-left-color: var(--accent); }
+  nav .section-label {
+    padding: 14px 20px 4px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  nav a.sub { padding-left: 32px; font-size: 12px; }
+
+  main { flex: 1; padding: 48px 56px; max-width: 980px; }
+  section { margin-bottom: 64px; }
+
+  h2 {
+    font-size: 26px; font-weight: 600; color: var(--text);
+    margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--accent-light);
+  }
+  h2 .tag {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    background: var(--accent-light); color: var(--accent);
+    padding: 2px 8px; border-radius: 4px; margin-left: 10px;
+    vertical-align: middle; letter-spacing: 0.05em;
+  }
+  h3 { font-size: 17px; font-weight: 600; color: var(--text); margin: 28px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; color: var(--text); margin: 16px 0 6px; }
+  p { margin-bottom: 12px; color: var(--text-muted); font-size: 14px; }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; font-family: 'SF Mono','Fira Code','Cascadia Code',monospace;
+    font-size: 12.5px; line-height: 1.65; overflow-x: auto; margin: 12px 0; color: var(--text);
+  }
+  code {
+    background: var(--code-bg); font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 12px; padding: 1px 5px; border-radius: 3px; color: var(--accent);
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th {
+    background: var(--gray-light); font-weight: 600; text-align: left;
+    padding: 9px 13px; border-bottom: 2px solid var(--border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  td { padding: 8px 13px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 11.5px; }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--accent-light);
+    border-radius: 0 8px 8px 0; padding: 13px 16px; margin: 14px 0; font-size: 13.5px; color: var(--text);
+  }
+  .callout.warning { border-color: var(--amber); background: var(--amber-light); }
+  .callout.success { border-color: var(--teal); background: var(--teal-light); }
+  .callout.sky     { border-color: var(--sky);  background: var(--sky-light); }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .badge-pk   { background:
+  .badge-fk   { background: var(--teal-light); color: var(--teal); }
+  .badge-idx  { background: var(--amber-light); color: var(--amber); }
+  .badge-uniq { background: var(--coral-light); color: var(--coral); }
+  .badge-opt  { background: var(--gray-light); color: var(--gray); }
+  .badge-ext  { background: var(--sky-light); color: var(--sky); }
+
+  .schema-block { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 24px; overflow: hidden; }
+  .schema-header {
+    background: var(--accent); color: white; padding: 10px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .schema-header h4 { margin: 0; font-size: 14px; font-weight: 700; color: white; font-family: 'SF Mono',monospace; }
+  .schema-header span { font-size: 11px; opacity: 0.75; font-weight: 400; }
+  .schema-header.teal  { background: var(--teal); }
+  .schema-header.coral { background: var(--coral); }
+  .schema-header.amber { background: var(--amber); }
+  .schema-header.gray  { background: var(--gray); }
+  .schema-header.sky   { background: var(--sky); }
+  .schema-header.purple-dark { background:
+
+  .schema-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .schema-table th {
+    background: var(--gray-light); padding: 7px 14px; font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+    font-weight: 600; border-bottom: 1px solid var(--border);
+  }
+  .schema-table td { padding: 7px 14px; border-bottom: 1px solid
+  .schema-table tr:last-child td { border-bottom: none; }
+  .field-name { font-family: 'SF Mono',monospace; font-size: 12px; font-weight: 600; color: var(--text); }
+  .field-type { font-family: 'SF Mono',monospace; font-size: 11.5px; color: var(--teal); white-space: nowrap; }
+  .field-notes { color: var(--text-muted); font-size: 12px; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+  .card-sm { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .card-sm h4 { margin-top: 0; font-size: 13px; }
+  .card-sm p { font-size: 12.5px; margin-bottom: 0; }
+
+  /* ERD */
+  .erd-container {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 28px; margin: 16px 0; overflow-x: auto;
+  }
+  .erd-row { display: flex; align-items: center; gap: 0; margin-bottom: 6px; flex-wrap: nowrap; }
+  .erd-box {
+    border: 1.5px solid var(--border); border-radius: 6px; padding: 7px 14px;
+    font-family: 'SF Mono',monospace; font-size: 12px; font-weight: 600;
+    background: var(--bg); white-space: nowrap; color: var(--text);
+  }
+  .erd-box.core    { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  .erd-box.content { border-color: var(--teal);   background: var(--teal-light);  color: var(--teal); }
+  .erd-box.hw      { border-color: var(--amber);  background: var(--amber-light); color: var(--amber); }
+  .erd-box.quiz    { border-color: var(--coral);  background: var(--coral-light); color: var(--coral); }
+  .erd-box.ext     { border-color: var(--sky);    background: var(--sky-light);   color: var(--sky); border-style: dashed; }
+  .erd-line { font-family: monospace; font-size: 13px; color: var(--text-muted); padding: 0 4px; white-space: nowrap; }
+  .erd-section { margin-bottom: 20px; }
+  .erd-section h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; }
+
+  /* Rel lines */
+  .rel-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px dashed var(--border); }
+  .rel-line:last-child { border-bottom: none; }
+  .rel-arrow { color: var(--accent); font-weight: 700; font-family: monospace; }
+  .rel-card  { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; font-family: 'SF Mono',monospace; font-size: 11.5px; padding: 1px 6px; }
+  .rel-card  { color: var(--text); }
+  .rel-cardinality { font-size: 11px; color: var(--text-muted); background: var(--gray-light); padding: 1px 6px; border-radius: 3px; font-family: monospace; }
+
+  /* Decision cards */
+  .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .decision-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; border-top: 3px solid var(--accent); }
+  .decision-card h4 { margin-top: 0; font-size: 13px; color: var(--accent); }
+  .decision-card p { font-size: 12.5px; margin-bottom: 0; }
+  .decision-card.teal  { border-top-color: var(--teal); }  .decision-card.teal h4  { color: var(--teal); }
+  .decision-card.coral { border-top-color: var(--coral); } .decision-card.coral h4 { color: var(--coral); }
+  .decision-card.amber { border-top-color: var(--amber); } .decision-card.amber h4 { color: var(--amber); }
+  .decision-card.sky   { border-top-color: var(--sky); }   .decision-card.sky h4   { color: var(--sky); }
+  .decision-card.gray  { border-top-color: var(--gray); }  .decision-card.gray h4  { color: var(--gray); }
+
+  /* Flow */
+  .flow-row { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
+  .flow-node { background: var(--accent); color: white; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 500; }
+  .flow-node.teal  { background: var(--teal); }
+  .flow-node.amber { background: var(--amber); }
+  .flow-node.coral { background: var(--coral); }
+  .flow-node.gray  { background: var(--gray); }
+  .flow-node.sky   { background: var(--sky); }
+  .flow-arrow { font-size: 18px; color: var(--text-muted); padding: 0 8px; }
+
+  /* Domain boundary marker */
+  .boundary { border: 2px dashed var(--sky); border-radius: 10px; padding: 16px 20px; margin: 16px 0; }
+  .boundary-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sky); margin-bottom: 8px; }
+
+  /* Future ext */
+  .future-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .future-card { background: var(--bg); border: 1px dashed var(--sky); border-radius: 8px; padding: 14px 16px; }
+  .future-card h4 { margin-top: 0; font-size: 13px; color: var(--sky); }
+  .future-card p  { font-size: 12px; margin-bottom: 0; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  .overview-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 0; margin: 20px 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); }
+  .overview-col { padding: 16px 14px; border-right: 1px solid var(--border); }
+  .overview-col:last-child { border-right: none; }
+  .overview-col h5 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 10px; }
+  .overview-col ul { list-style: none; padding: 0; }
+  .overview-col ul li { font-size: 12px; color: var(--text-muted); padding: 3px 0; border-bottom: 1px dashed
+  .overview-col ul li:last-child { border-bottom: none; }
+  .overview-col.col-core  { background: var(--accent-light); } .overview-col.col-core  h5 { color: var(--accent); }
+  .overview-col.col-cont  { background: var(--teal-light); }  .overview-col.col-cont  h5 { color: var(--teal); }
+  .overview-col.col-hw    { background: var(--amber-light); } .overview-col.col-hw    h5 { color: var(--amber); }
+  .overview-col.col-quiz  { background: var(--coral-light); } .overview-col.col-quiz  h5 { color: var(--coral); }
+  .overview-col.col-enrol { background: var(--sky-light); }   .overview-col.col-enrol h5 { color: var(--sky); }
+
+  @media (max-width: 1100px) { nav { display: none; } main { padding: 24px 20px; } }
+  @media (max-width: 700px)  { .decision-grid { grid-template-columns: 1fr; } .overview-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav>
+  <div class="logo">
+    <h1>Learning Domain</h1>
+    <p>LearnFlow Design Document v2.0</p>
+  </div>
+  <div class="section-label">Overview</div>
+  <a href="
+  <a href="
+  <a href="
+  <div class="section-label">Core Tables</div>
+  <a href="
+  <a href="
+  <a href="
+  <a href="
+  <div class="section-label">Catalog</div>
+  <a href="
+  <div class="section-label">Lesson Components</div>
+  <a href="
+  <a href="
+  <a href="
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Architecture</div>
+  <a href="
+  <a href="
+  <a href="
+  <a href="
+  <a href="
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <h2>Learning Domain Overview <span class="tag">SCOPE</span></h2>
+
+  <div class="callout sky" style="margin-bottom:18px">
+    <strong>v2.0 Changes from v1.0</strong><br>
+    <span style="font-size:13px">
+      <strong>1.</strong> <code>Enrollment</code> → <code>CourseEnrollment</code> — explicit name anticipating future <code>MentorGroupEnrollment</code>, <code>EventEnrollment</code> etc.<br>
+      <strong>2.</strong> <code>Course.mode</code> removed — replaced with <code>supports_online</code> / <code>supports_offline</code> flags. Delivery format moved to <code>CourseEnrollment.delivery_format</code>. One course, no duplication.<br>
+      <strong>3.</strong> Cross-domain soft UUIDs replaced with real <code>ForeignKey</code> — monolith, one DB, no reason to pay the complexity cost early.<br>
+      <strong>4.</strong> <code>CourseCategory</code> added — hierarchical catalog taxonomy (2 levels). Single FK on Course.
+    </span>
+  </div>
+
+  <p>The Learning Domain owns the complete course structure — from catalog to lesson content. It defines <em>what</em> students learn. It does not own <em>how far</em> they've gotten (UserProgress), <em>how well</em> they did (Assessment), or <em>who taught them</em> (Mentorship).</p>
+
+  <div class="overview-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="overview-col col-core">
+      <h5>🗂 Core Structure</h5>
+      <ul>
+        <li>Course</li>
+        <li>Module</li>
+        <li>Lesson</li>
+        <li>CourseEnrollment</li>
+      </ul>
+    </div>
+    <div class="overview-col col-cont">
+      <h5>📄 Content</h5>
+      <ul>
+        <li>LessonContent</li>
+        <li>Types: video</li>
+        <li>pdf / slides</li>
+        <li>text / link</li>
+        <li>recording / code</li>
+      </ul>
+    </div>
+    <div class="overview-col col-hw">
+      <h5>📝 Practice</h5>
+      <ul>
+        <li>LessonHomework</li>
+        <li>LessonPractice</li>
+      </ul>
+    </div>
+    <div class="overview-col col-quiz">
+      <h5>✅ Quiz</h5>
+      <ul>
+        <li>LessonQuiz</li>
+        <li>QuizQuestion</li>
+        <li>QuizOption</li>
+      </ul>
+    </div>
+    <div class="overview-col col-enrol">
+      <h5>🔗 Bridge</h5>
+      <ul>
+        <li>CourseEnrollment</li>
+        <li>User → Course</li>
+        <li>delivery_format</li>
+      </ul>
+    </div>
+    <div class="overview-col" style="background:var(--teal-light)">
+      <h5 style="color:var(--teal)">🏷 Catalog</h5>
+      <ul>
+        <li>CourseCategory</li>
+        <li>parent / children</li>
+        <li>slug / order</li>
+      </ul>
+    </div>
+  </div>
+
+  <p><strong>12 tables total.</strong> Every table has a single, well-defined responsibility. No god-objects. No polymorphic cross-domain inheritance.</p>
+</section>
+
+<!-- DOMAIN BOUNDARIES -->
+<section id="boundaries">
+  <h2>Domain Boundaries <span class="tag">WHAT WE OWN</span></h2>
+
+  <div class="boundary">
+    <div class="boundary-label">🔵 Learning Domain — this document</div>
+    <div class="flow-row">
+      <div class="flow-node">Course</div><div class="flow-arrow">→</div>
+      <div class="flow-node">Module</div><div class="flow-arrow">→</div>
+      <div class="flow-node">Lesson</div><div class="flow-arrow">→</div>
+      <div class="flow-node teal">Content</div><div class="flow-arrow">+</div>
+      <div class="flow-node amber">Homework</div><div class="flow-arrow">+</div>
+      <div class="flow-node amber">Practice</div><div class="flow-arrow">+</div>
+      <div class="flow-node coral">Quiz</div>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px">
+    <div class="card-sm" style="border-top: 3px solid var(--sky)">
+      <h4 style="color:var(--sky)">References (real FK in monolith)</h4>
+      <p>Identity domain: <code>User.id</code> is referenced via real Django <code>ForeignKey</code> in <code>CourseEnrollment</code> and <code>Course.created_by</code>. When extracted to microservices — remove FK in one migration.</p>
+    </div>
+    <div class="card-sm" style="border-top: 3px dashed var(--gray)">
+      <h4 style="color:var(--gray)">NOT in this domain</h4>
+      <p>UserProgress · Analytics · Assessment/Exams · Certificates · Mentorship groups · Notifications · Submissions review</p>
+    </div>
+    <div class="card-sm" style="border-top: 3px solid var(--teal)">
+      <h4 style="color:var(--teal)">Consumed by other domains</h4>
+      <p><code>Lesson.id</code> → UserProgress tracks completion. <code>LessonHomework.id</code> → Submissions domain handles uploads. <code>LessonQuiz.id</code> → Assessment domain records attempts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LEARNING FLOW -->
+<section id="learning-flow">
+  <h2>Learning Flow <span class="tag">SEQUENCE</span></h2>
+  <p>The learning domain defines the structure. Other domains consume it to power the student journey.</p>
+
+  <div style="display:flex;flex-direction:column;gap:0;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0">
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border)">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">1</div>
+      <div><strong style="font-size:13px">CourseEnrollment</strong> — <span style="color:var(--text-muted);font-size:13px">Student enrolls in Course → <code>CourseEnrollment</code> row created. Delivery format (online/offline) locked here, not on the Course itself.</span></div>
+      <span style="margin-left:auto;font-size:11px;color:var(--sky);background:var(--sky-light);padding:2px 8px;border-radius:4px;white-space:nowrap">Learning Domain</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border)">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">2</div>
+      <div><strong style="font-size:13px">Lesson Study</strong> — <span style="color:var(--text-muted);font-size:13px">Student views LessonContent items (video, text, pdf, etc.) in order.</span></div>
+      <span style="margin-left:auto;font-size:11px;color:var(--teal);background:var(--teal-light);padding:2px 8px;border-radius:4px;white-space:nowrap">UserProgress Domain</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border)">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">3</div>
+      <div><strong style="font-size:13px">Lesson Practice + Quiz</strong> — <span style="color:var(--text-muted);font-size:13px">In-lesson check: LessonPractice exercises and LessonQuiz knowledge check.</span></div>
+      <span style="margin-left:auto;font-size:11px;color:var(--coral);background:var(--coral-light);padding:2px 8px;border-radius:4px;white-space:nowrap">Assessment Domain</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border)">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">4</div>
+      <div><strong style="font-size:13px">Homework Submission</strong> — <span style="color:var(--text-muted);font-size:13px">Student submits work defined by LessonHomework. Mentor reviews via Submissions domain.</span></div>
+      <span style="margin-left:auto;font-size:11px;color:var(--amber);background:var(--amber-light);padding:2px 8px;border-radius:4px;white-space:nowrap">Submissions Domain</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 20px">
+      <div style="min-width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">5</div>
+      <div><strong style="font-size:13px">Module Assessment</strong> — <span style="color:var(--text-muted);font-size:13px">End-of-module exam. Pass → unlock next Module. Fail → retake. Owned by Assessment domain.</span></div>
+      <span style="margin-left:auto;font-size:11px;color:var(--coral);background:var(--coral-light);padding:2px 8px;border-radius:4px;white-space:nowrap">Assessment Domain</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Key principle:</strong> The Learning Domain defines the <em>structure and content</em>. All <em>student interaction with that content</em> (progress, attempts, submissions, grades) lives in separate domains that reference Learning Domain IDs.
+  </div>
+</section>
+
+<!-- ===================== CORE TABLES ===================== -->
+
+<!-- COURSE -->
+<section id="course">
+  <h2>Course <span class="tag">TOP-LEVEL CONTAINER</span></h2>
+  <p>The root entity of the Learning Domain. A Course groups Modules and defines sequencing rules and publication status. It acts as the catalog entry visible to students and admins. Delivery mode is <strong>not</strong> stored on Course — it is a property of each <code>CourseEnrollment</code>. The Course only declares which delivery formats it supports.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">
+      <h4>courses_course</h4>
+      <span>Top-level learning container · soft-deletable</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes">gen_random_uuid()</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">Display title shown to students</td></tr>
+      <tr><td class="field-name">slug</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL <span class="badge badge-uniq">UNIQUE</span></td><td class="field-notes">URL-safe identifier. Auto-generated from title. e.g. <code>python-backend-dev</code></td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Long-form course description. Supports markdown.</td></tr>
+      <tr><td class="field-name">short_description</td><td class="field-type">VARCHAR(500)</td><td>NULLABLE</td><td class="field-notes">Used in catalog cards and previews</td></tr>
+      <tr><td class="field-name">thumbnail_url</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">S3/CDN URL. Null = default placeholder.</td></tr>
+      <tr><td class="field-name">category_id</td><td class="field-type">UUID</td><td>NULLABLE <span class="badge badge-fk">FK</span></td><td class="field-notes">→ courses_coursecategory.id, SET NULL on delete. Null = uncategorised.</td></tr>
+      <tr><td class="field-name">status</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL, DEFAULT 'draft'</td><td class="field-notes"><code>draft</code> | <code>published</code> | <code>archived</code>. Only published courses visible to students.</td></tr>
+      <tr><td class="field-name">supports_online</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT true</td><td class="field-notes">Course can be taken online (self-paced). Validated by CourseEnrollmentService at enrollment time.</td></tr>
+      <tr><td class="field-name">supports_offline</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Course can be taken offline (mentor-led group). Validated by CourseEnrollmentService at enrollment time.</td></tr>
+      <tr><td class="field-name">language</td><td class="field-type">VARCHAR(10)</td><td>NOT NULL, DEFAULT 'ru'</td><td class="field-notes">BCP-47 tag. For future localization.</td></tr>
+      <tr><td class="field-name">estimated_weeks</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Shown in catalog as expected duration</td></tr>
+      <tr><td class="field-name">is_sequential</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT true</td><td class="field-notes">If true, modules must be completed in order. If false, all modules are unlocked from the start.</td></tr>
+      <tr><td class="field-name">created_by</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span></td><td class="field-notes">→ <code>settings.AUTH_USER_MODEL</code>, SET NULL on delete. Real DB FK — monolith. Remove when extracting to service.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">deleted_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Soft delete. Non-null = archived/deleted. Use SoftDeleteManager to exclude from default queries.</td></tr>
+    </table>
+  </div>
+
+  <pre>-- Indexes
+CREATE UNIQUE INDEX idx_course_slug     ON courses_course (slug);
+CREATE INDEX idx_course_status          ON courses_course (status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_course_category        ON courses_course (category_id) WHERE deleted_at IS NULL;
+
+-- Constraint
+ALTER TABLE courses_course
+    ADD CONSTRAINT chk_course_status  CHECK (status IN ('draft','published','archived')),
+    ADD CONSTRAINT chk_course_weeks   CHECK (estimated_weeks IS NULL OR estimated_weeks > 0),
+    -- Must support at least one delivery format
+    ADD CONSTRAINT chk_course_delivery CHECK (supports_online = TRUE OR supports_offline = TRUE);</pre>
+
+  <div class="callout warning">
+    <strong>Why remove <code>mode</code> from Course?</strong> A course like "Python Backend" is one course — its content (modules, lessons) is identical for online and offline students. Putting <code>mode</code> on Course would force duplicate entries: "Python Backend Online" and "Python Backend Offline". Instead, <code>supports_online</code> / <code>supports_offline</code> flags declare capability, while <code>CourseEnrollment.delivery_format</code> records the student's actual delivery choice. No content duplication.
+  </div>
+  <div class="callout">
+    <strong>Why <code>is_sequential</code> on Course?</strong> Most courses are sequential — students must finish Module 1 before unlocking Module 2. But some courses (e.g. reference material, elective topics) should allow free navigation. This flag drives the unlock logic in the UserProgress domain without needing a separate table.
+  </div>
+</section>
+
+<!-- MODULE -->
+<section id="module">
+  <h2>Module <span class="tag">LESSON GROUPING</span></h2>
+  <p>A Module groups related Lessons into a logical unit. It is the granularity at which students are assessed (end-of-module assessment). Modules are ordered within a course and can be independently published.</p>
+
+  <div class="schema-block">
+    <div class="schema-header teal">
+      <h4>courses_module</h4>
+      <span>Ordered lesson grouping within a course · soft-deletable</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">course_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL</td><td class="field-notes">→ courses_course.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">e.g. "Module 3 — Django REST Framework"</td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">What this module covers. Shown before unlock.</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Position within course. UNIQUE with course_id. No gaps required — reorder via bulk update.</td></tr>
+      <tr><td class="field-name">is_published</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Unpublished modules invisible to students. Allows staged rollout of module-by-module.</td></tr>
+      <tr><td class="field-name">estimated_hours</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Shown on module overview screen. Informational only.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">deleted_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Soft delete</td></tr>
+    </table>
+  </div>
+
+  <pre>-- Ordering uniqueness per course
+CREATE UNIQUE INDEX uq_module_course_order
+    ON courses_module (course_id, "order")
+    WHERE deleted_at IS NULL;
+
+-- Fast ordered listing for a course
+CREATE INDEX idx_module_course_published
+    ON courses_module (course_id, "order")
+    WHERE is_published = TRUE AND deleted_at IS NULL;</pre>
+
+  <div class="callout">
+    <strong>Order uniqueness strategy:</strong> The <code>UNIQUE(course_id, order)</code> index is partial (<code>WHERE deleted_at IS NULL</code>). This allows a deleted module to "leave" its slot without blocking a new module at the same position. Reordering is done in a single transaction with a temporary displacement step to avoid constraint violations.
+  </div>
+</section>
+
+<!-- LESSON -->
+<section id="lesson">
+  <h2>Lesson <span class="tag">LEARNING UNIT</span></h2>
+  <p>The atomic learning container. A Lesson is what a student opens and works through. It may contain zero or more Content items, zero or one Homework, zero or more Practice exercises, and zero or one Quiz. All four are optional.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">
+      <h4>courses_lesson</h4>
+      <span>Atomic learning container · holds content, homework, practice, quiz</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">module_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL</td><td class="field-notes">→ courses_module.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">e.g. "Lesson 4 — JWT Authentication"</td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Short overview shown in module lesson list</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Position within module. UNIQUE with module_id.</td></tr>
+      <tr><td class="field-name">is_published</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Controls student visibility independent of module publish state</td></tr>
+      <tr><td class="field-name">is_free_preview</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">If true, lesson content visible without enrollment (marketing)</td></tr>
+      <tr><td class="field-name">estimated_minutes</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Expected time to complete. Shown on lesson card.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">deleted_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Soft delete. UserProgress records for this lesson preserved.</td></tr>
+    </table>
+  </div>
+
+  <pre>CREATE UNIQUE INDEX uq_lesson_module_order
+    ON courses_lesson (module_id, "order")
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_lesson_module_published
+    ON courses_lesson (module_id, "order")
+    WHERE is_published = TRUE AND deleted_at IS NULL;</pre>
+
+  <div class="callout success">
+    <strong>Online vs Offline:</strong> No <code>mode</code> field on Lesson. The lesson structure (content, homework, quiz) is identical for both delivery formats. The student's <code>CourseEnrollment.delivery_format</code> determines how the course is delivered. For offline courses, the <em>Session Scheduling</em> in the Mentorship domain maps which lessons are covered in which class session.
+  </div>
+</section>
+
+<!-- ENROLLMENT -->
+<section id="enrollment">
+  <h2>CourseEnrollment <span class="tag">DOMAIN BRIDGE</span></h2>
+  <p>CourseEnrollment is the foundational link between the Identity domain (User) and the Learning domain (Course). Named explicitly to distinguish it from future <code>MentorGroupEnrollment</code>, <code>EventEnrollment</code>, and <code>CertificationEnrollment</code> models. Its lifecycle is tied to the course — not the user's auth state. It answers: "which students are taking which course, and in which delivery format?"</p>
+
+  <div class="callout sky">
+    <strong>delivery_format lives here, not on Course.</strong> One course can have students enrolled both online and offline simultaneously. The format is a property of the student's enrollment, not of the course content. This eliminates the need for duplicate courses like "Python Backend Online" and "Python Backend Offline".
+  </div>
+
+  <div class="schema-block">
+    <div class="schema-header sky">
+      <h4>courses_courseenrollment</h4>
+      <span>User × Course membership — cross-domain bridge · explicit name</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">user</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ <code>settings.AUTH_USER_MODEL</code>, PROTECT. Real DB FK — monolith. Use <code>on_delete=PROTECT</code>: don't silently drop enrollments if user deleted; handle explicitly via signal.</td></tr>
+      <tr><td class="field-name">course</td><td class="field-type">ForeignKey</td><td>NOT NULL <span class="badge badge-fk">FK</span> <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ <code>courses_course.id</code>, RESTRICT DELETE (cannot delete course with active enrollments)</td></tr>
+      <tr><td class="field-name">status</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL, DEFAULT 'active'</td><td class="field-notes"><code>active</code> | <code>completed</code> | <code>dropped</code></td></tr>
+      <tr><td class="field-name">delivery_format</td><td class="field-type">VARCHAR(10)</td><td>NOT NULL</td><td class="field-notes"><code>online</code> | <code>offline</code>. Selected by student (or admin) at enrollment time. Validated against <code>course.supports_online</code> / <code>course.supports_offline</code>.</td></tr>
+      <tr><td class="field-name">enrolled_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes">Immutable after creation</td></tr>
+      <tr><td class="field-name">completed_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when all modules passed. Triggers certificate in Certification domain.</td></tr>
+      <tr><td class="field-name">dropped_at</td><td class="field-type">TIMESTAMPTZ</td><td>NULLABLE</td><td class="field-notes">Set when status = dropped</td></tr>
+      <tr><td class="field-name">enrolled_by</td><td class="field-type">ForeignKey</td><td>NULLABLE <span class="badge badge-fk">FK</span></td><td class="field-notes">If null → self-enrolled. If set → admin/mentor enrolled this student. → <code>settings.AUTH_USER_MODEL</code>, SET NULL on delete.</td></tr>
+    </table>
+  </div>
+
+  <pre>-- One enrollment per user per course
+CREATE UNIQUE INDEX uq_courseenrollment_user_course
+    ON courses_courseenrollment (user_id, course_id);
+
+-- Fast lookup: all active courses for a student (dashboard)
+CREATE INDEX idx_courseenrollment_user_status
+    ON courses_courseenrollment (user_id, status);
+
+-- Fast lookup: all students in a course (mentor/admin view)
+CREATE INDEX idx_courseenrollment_course_status
+    ON courses_courseenrollment (course_id, status);
+
+-- Constraint
+ALTER TABLE courses_courseenrollment
+    ADD CONSTRAINT chk_enrollment_status         CHECK (status IN ('active','completed','dropped')),
+    ADD CONSTRAINT chk_enrollment_delivery_format CHECK (delivery_format IN ('online','offline'));
+</pre>
+
+  <div class="callout warning">
+    <strong>Why real FK to User?</strong> We are building a Django monolith with a single PostgreSQL database. Both <code>accounts</code> and <code>courses</code> apps share the same DB. Real foreign keys give us free cascade/protect semantics, <code>select_related</code> in the ORM, and DB-level integrity at zero extra cost. When (if) we ever extract to microservices, we remove these FKs in a single migration. Premature soft-UUID references add complexity without any benefit today.
+  </div>
+</section>
+
+<!-- ===================== CATALOG ===================== -->
+
+<!-- COURSE CATEGORY -->
+<section id="category">
+  <h2>CourseCategory <span class="tag">CATALOG TAXONOMY</span></h2>
+  <p>Categories organise the course catalog into a navigable hierarchy. Without this, the catalog becomes a flat, unfiltered list that grows unusable. Supports two levels: root categories (Backend, Frontend, DevOps) and subcategories (Django, FastAPI under Backend).</p>
+
+  <div class="callout">
+    <strong>Single FK, not a junction table.</strong> One course belongs to one primary category. A junction table (<code>CourseCategoryAssignment</code>) would be needed only if one course genuinely belongs to multiple categories. Start with a single FK — it covers 95% of cases. If multi-category tagging becomes a product requirement, add a junction table without touching existing data.
+  </div>
+
+  <div class="schema-block">
+    <div class="schema-header teal">
+      <h4>courses_coursecategory</h4>
+      <span>Hierarchical catalog taxonomy — max 2 levels (root + subcategory)</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes">gen_random_uuid()</td></tr>
+      <tr><td class="field-name">name</td><td class="field-type">VARCHAR(100)</td><td>NOT NULL</td><td class="field-notes">Display name. e.g. "Backend Development", "Django"</td></tr>
+      <tr><td class="field-name">slug</td><td class="field-type">VARCHAR(100)</td><td>NOT NULL <span class="badge badge-uniq">UNIQUE</span></td><td class="field-notes">URL-safe. e.g. <code>backend</code>, <code>django</code>. Used in catalog routes: <code>/catalog/backend/</code></td></tr>
+      <tr><td class="field-name">parent</td><td class="field-type">ForeignKey</td><td>NULLABLE <span class="badge badge-fk">FK</span></td><td class="field-notes">Self-referential. → <code>courses_coursecategory.id</code>, SET NULL on delete. NULL = root category. Non-null = subcategory.</td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">VARCHAR(500)</td><td>NULLABLE</td><td class="field-notes">Short description shown on catalog filter panel</td></tr>
+      <tr><td class="field-name">icon</td><td class="field-type">VARCHAR(50)</td><td>NULLABLE</td><td class="field-notes">Icon identifier or emoji. e.g. <code>code-bracket</code> (Heroicons), <code>🐍</code>. Rendered by frontend.</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 0</td><td class="field-notes">Display order within the same parent. Lower = shown first.</td></tr>
+      <tr><td class="field-name">is_active</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT true</td><td class="field-notes">Inactive categories hidden from catalog. Courses retain their category_id — they are not orphaned.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <pre>-- Slug must be globally unique (not just per parent) for clean URLs
+CREATE UNIQUE INDEX idx_category_slug ON courses_coursecategory (slug);
+
+-- Fast listing: all root categories in order
+CREATE INDEX idx_category_root ON courses_coursecategory (parent_id, "order")
+    WHERE is_active = TRUE;
+
+-- Fast listing: subcategories of a given parent
+CREATE INDEX idx_category_children ON courses_coursecategory (parent_id, "order")
+    WHERE parent_id IS NOT NULL AND is_active = TRUE;</pre>
+
+  <h3>Category hierarchy example</h3>
+  <pre>Backend (root, parent=NULL)
+  ├── Django        (parent=Backend)
+  ├── FastAPI       (parent=Backend)
+  └── Node.js       (parent=Backend)
+
+Frontend (root, parent=NULL)
+  ├── React         (parent=Frontend)
+  └── Vue           (parent=Frontend)
+
+DevOps (root, parent=NULL)
+Mobile (root, parent=NULL)</pre>
+
+  <div class="callout warning">
+    <strong>Max depth = 2.</strong> The schema allows arbitrary depth (self-referential FK), but the application should enforce max 2 levels (root + one subcategory level). Deeper hierarchies produce confusing UX without product benefit at this stage. Application-level validation: <code>if parent.parent_id is not None: raise ValidationError</code>.
+  </div>
+</section>
+
+<!-- ===================== LESSON COMPONENTS ===================== -->
+
+<!-- LESSON CONTENT -->
+<section id="content">
+  <h2>LessonContent <span class="tag">UNIFIED CONTENT MODEL</span></h2>
+  <p>A single table handles all content types via a <code>type</code> discriminator. One lesson can have multiple content items, ordered and displayed in sequence. This avoids a table-per-type explosion while keeping queries simple.</p>
+
+  <div class="schema-block">
+    <div class="schema-header teal">
+      <h4>courses_lessoncontent</h4>
+      <span>Unified content item: video | pdf | slides | text | link | recording | code</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">lesson_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ courses_lesson.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">type</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL</td><td class="field-notes"><code>video</code> | <code>pdf</code> | <code>slides</code> | <code>text</code> | <code>link</code> | <code>recording</code> | <code>code</code></td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">Displayed above the content item</td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Optional context shown below title</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Display order within lesson. UNIQUE per lesson.</td></tr>
+      <tr><td class="field-name">url</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Used for: <code>video</code>, <code>pdf</code>, <code>slides</code>, <code>link</code>, <code>recording</code>. S3 key or external URL.</td></tr>
+      <tr><td class="field-name">body</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Used for: <code>text</code> (markdown), <code>code</code> (source code). Stored inline.</td></tr>
+      <tr><td class="field-name">duration_seconds</td><td class="field-type">INTEGER</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Used for <code>video</code> and <code>recording</code>. Shown in UI as "12 min".</td></tr>
+      <tr><td class="field-name">file_size_bytes</td><td class="field-type">BIGINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Used for <code>pdf</code>, downloadable files</td></tr>
+      <tr><td class="field-name">metadata</td><td class="field-type">JSONB</td><td>NOT NULL, DEFAULT '{}'</td><td class="field-notes">Type-specific extras. Schema documented below. Not queried via SQL — application reads it.</td></tr>
+      <tr><td class="field-name">is_required</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT true</td><td class="field-notes">If true, UserProgress domain must record this item as viewed before lesson completes.</td></tr>
+      <tr><td class="field-name">is_downloadable</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Only meaningful for pdf, slides, recording. Controls download button visibility.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <h3>metadata JSONB — by content type</h3>
+  <table>
+    <tr><th>type</th><th>metadata shape</th><th>Example</th></tr>
+    <tr><td><code>video</code></td><td><code>{ provider, thumbnail_url, is_hls }</code></td><td><code>{ "provider": "s3", "thumbnail_url": "...", "is_hls": true }</code></td></tr>
+    <tr><td><code>pdf</code></td><td><code>{ page_count }</code></td><td><code>{ "page_count": 24 }</code></td></tr>
+    <tr><td><code>slides</code></td><td><code>{ slide_count, embed_url }</code></td><td><code>{ "slide_count": 18, "embed_url": "https://..." }</code></td></tr>
+    <tr><td><code>text</code></td><td><code>{}</code></td><td>Body is markdown. No extras needed.</td></tr>
+    <tr><td><code>link</code></td><td><code>{ open_in_new_tab, link_text }</code></td><td><code>{ "open_in_new_tab": true, "link_text": "MDN Docs" }</code></td></tr>
+    <tr><td><code>recording</code></td><td><code>{ recorded_at, session_title }</code></td><td><code>{ "recorded_at": "2024-10-15", "session_title": "Live Q&A" }</code></td></tr>
+    <tr><td><code>code</code></td><td><code>{ language, is_runnable, theme }</code></td><td><code>{ "language": "python", "is_runnable": false, "theme": "dark" }</code></td></tr>
+  </table>
+
+  <pre>CREATE UNIQUE INDEX uq_content_lesson_order
+    ON courses_lessoncontent (lesson_id, "order");
+
+CREATE INDEX idx_content_lesson
+    ON courses_lessoncontent (lesson_id, "order");
+
+-- For content type filtering (e.g. "show all videos in this course")
+CREATE INDEX idx_content_type
+    ON courses_lessoncontent (type, lesson_id);
+
+ALTER TABLE courses_lessoncontent
+    ADD CONSTRAINT chk_content_type CHECK (
+        type IN ('video','pdf','slides','text','link','recording','code')
+    ),
+    -- At least one of url or body must be present
+    ADD CONSTRAINT chk_content_has_source CHECK (
+        url IS NOT NULL OR body IS NOT NULL
+    );</pre>
+
+  <div class="callout">
+    <strong>url vs body:</strong> The <code>url</code> field holds an S3 key or external URL for binary/remote content. The <code>body</code> field holds inline text content. These are mutually exclusive per type. A CHECK constraint enforces that at least one is provided. Application-level validation enforces which field applies to which type.
+  </div>
+</section>
+
+<!-- LESSON HOMEWORK -->
+<section id="homework">
+  <h2>LessonHomework <span class="tag">1:1 PER LESSON</span></h2>
+  <p>Homework is an assignment the student completes <em>outside</em> the platform and submits for mentor review. It defines the task — the submission itself lives in the Submissions domain. At most one homework per lesson (enforced via UNIQUE on lesson_id).</p>
+
+  <div class="schema-block">
+    <div class="schema-header amber">
+      <h4>courses_lessonhomework</h4>
+      <span>Assignment definition — submission handled by Submissions domain</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">lesson_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> <span class="badge badge-uniq">UNIQUE</span></td><td class="field-notes">→ courses_lesson.id, CASCADE DELETE. UNIQUE enforces max 1 homework per lesson.</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">e.g. "Build a REST API with authentication"</td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NOT NULL</td><td class="field-notes">Full task description. Supports markdown.</td></tr>
+      <tr><td class="field-name">instructions</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Step-by-step guide, acceptance criteria, hints for where to start</td></tr>
+      <tr><td class="field-name">max_score</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 100, CHECK &gt; 0</td><td class="field-notes">Max points mentor can award. Used by Submissions domain for scoring.</td></tr>
+      <tr><td class="field-name">deadline_offset_days</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Days after lesson unlock. Null = no deadline. Absolute deadline computed by Submissions domain at submission time.</td></tr>
+      <tr><td class="field-name">submission_type</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL, DEFAULT 'file'</td><td class="field-notes"><code>file</code> | <code>link</code> | <code>text</code> | <code>mixed</code>. Tells Submissions domain what upload UI to show.</td></tr>
+      <tr><td class="field-name">allowed_file_types</td><td class="field-type">TEXT[]</td><td>NOT NULL, DEFAULT '{}'</td><td class="field-notes">PostgreSQL array. e.g. <code>{pdf,zip,docx}</code>. Empty = any type allowed.</td></tr>
+      <tr><td class="field-name">max_file_size_mb</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 20, CHECK &gt; 0</td><td class="field-notes">Enforced by Submissions domain on upload</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <pre>ALTER TABLE courses_lessonhomework
+    ADD CONSTRAINT chk_homework_submission_type CHECK (
+        submission_type IN ('file','link','text','mixed')
+    );
+
+-- lesson_id UNIQUE index already created by OneToOneField migration</pre>
+
+  <div class="callout success">
+    <strong>Learning Domain responsibility ends here.</strong> LessonHomework says "the task is X, score out of Y, deadline is Z days after unlock." The Submissions domain reads these fields when a student submits, computes the absolute deadline, and handles file upload, mentor review, and scoring independently.
+  </div>
+</section>
+
+<!-- LESSON PRACTICE -->
+<section id="practice">
+  <h2>LessonPractice <span class="tag">1:N PER LESSON</span></h2>
+  <p>Practice exercises are completed <em>within</em> the platform — interactive, in-lesson tasks. Unlike homework, practice is done inline. A lesson can have multiple practice items (e.g., three short coding challenges). The Assessment domain records student attempts.</p>
+
+  <div class="schema-block">
+    <div class="schema-header amber">
+      <h4>courses_lessonpractice</h4>
+      <span>In-platform practice exercise — multiple per lesson, ordered</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">lesson_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ courses_lesson.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">description</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Context and motivation for the exercise</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Position within lesson. UNIQUE per lesson.</td></tr>
+      <tr><td class="field-name">type</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL, DEFAULT 'coding'</td><td class="field-notes"><code>coding</code> | <code>written</code> | <code>interactive</code>. Determines the UI and evaluation method.</td></tr>
+      <tr><td class="field-name">instructions</td><td class="field-type">TEXT</td><td>NOT NULL</td><td class="field-notes">What the student must do. Markdown supported.</td></tr>
+      <tr><td class="field-name">starter_code</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Pre-filled code shown to student. Type <code>coding</code> only.</td></tr>
+      <tr><td class="field-name">solution_code</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Reference solution. Never exposed to students. Type <code>coding</code> only.</td></tr>
+      <tr><td class="field-name">language</td><td class="field-type">VARCHAR(30)</td><td>NULLABLE</td><td class="field-notes">Programming language for <code>coding</code> type. e.g. <code>python</code>, <code>javascript</code></td></tr>
+      <tr><td class="field-name">hints</td><td class="field-type">JSONB</td><td>NOT NULL, DEFAULT '[]'</td><td class="field-notes">Ordered array of hint strings. Revealed progressively. e.g. <code>["Start with the models", "Use select_related"]</code></td></tr>
+      <tr><td class="field-name">max_score</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 100, CHECK &gt; 0</td><td class="field-notes">Max score for this practice item</td></tr>
+      <tr><td class="field-name">time_limit_minutes</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Null = untimed. Timer managed by Assessment domain during attempt.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <pre>CREATE UNIQUE INDEX uq_practice_lesson_order
+    ON courses_lessonpractice (lesson_id, "order");
+
+ALTER TABLE courses_lessonpractice
+    ADD CONSTRAINT chk_practice_type CHECK (type IN ('coding','written','interactive'));
+</pre>
+</section>
+
+<!-- LESSON QUIZ -->
+<section id="quiz">
+  <h2>LessonQuiz <span class="tag">0:1 PER LESSON</span></h2>
+  <p>A short knowledge-check quiz attached to a lesson. At most one quiz per lesson (unlike Practice, which can have many items). The quiz is the <em>definition</em> — student attempts and scoring live in the Assessment domain.</p>
+
+  <div class="schema-block">
+    <div class="schema-header coral">
+      <h4>courses_lessonquiz</h4>
+      <span>Lesson-level knowledge check — max one per lesson</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">lesson_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> <span class="badge badge-uniq">UNIQUE</span></td><td class="field-notes">→ courses_lesson.id, CASCADE DELETE. UNIQUE = one quiz per lesson.</td></tr>
+      <tr><td class="field-name">title</td><td class="field-type">VARCHAR(255)</td><td>NOT NULL</td><td class="field-notes">e.g. "Check your understanding"</td></tr>
+      <tr><td class="field-name">instructions</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Shown before student starts. "Answer all questions. You have 10 minutes."</td></tr>
+      <tr><td class="field-name">time_limit_minutes</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Null = untimed. Timer enforced by Assessment domain during attempt.</td></tr>
+      <tr><td class="field-name">pass_score</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 70, CHECK 0–100</td><td class="field-notes">Percentage threshold to pass. Assessment domain uses this to set attempt.is_passed.</td></tr>
+      <tr><td class="field-name">max_attempts</td><td class="field-type">SMALLINT</td><td>NULLABLE, CHECK &gt; 0</td><td class="field-notes">Null = unlimited retakes. Assessment domain enforces this.</td></tr>
+      <tr><td class="field-name">shuffle_questions</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Randomize question order per attempt</td></tr>
+      <tr><td class="field-name">shuffle_options</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT false</td><td class="field-notes">Randomize answer option order per attempt</td></tr>
+      <tr><td class="field-name">show_correct_after_attempt</td><td class="field-type">BOOLEAN</td><td>NOT NULL, DEFAULT true</td><td class="field-notes">Show correct answers + explanations after submitting. False for high-stakes quizzes.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <pre>ALTER TABLE courses_lessonquiz
+    ADD CONSTRAINT chk_quiz_pass_score CHECK (pass_score BETWEEN 0 AND 100);</pre>
+
+  <hr>
+
+  <!-- QUIZ QUESTION -->
+  <h2 id="quiz-question" style="border-top:none;margin-top:0">QuizQuestion <span class="tag">PART OF QUIZ</span></h2>
+  <p>Individual questions within a LessonQuiz. Supports four question types. Explanation field enables pedagogical feedback after answering.</p>
+
+  <div class="schema-block">
+    <div class="schema-header purple-dark">
+      <h4>courses_quizquestion</h4>
+      <span>Individual quiz question · four types</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">quiz_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ courses_lessonquiz.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">type</td><td class="field-type">VARCHAR(20)</td><td>NOT NULL</td><td class="field-notes"><code>single_choice</code> | <code>multiple_choice</code> | <code>true_false</code> | <code>short_text</code></td></tr>
+      <tr><td class="field-name">body</td><td class="field-type">TEXT</td><td>NOT NULL</td><td class="field-notes">The question text. Supports markdown (code blocks, bold). e.g. "What does ORM stand for?"</td></tr>
+      <tr><td class="field-name">explanation</td><td class="field-type">TEXT</td><td>NULLABLE</td><td class="field-notes">Shown after answering (if <code>show_correct_after_attempt</code> = true). Explains the correct answer.</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Display order. UNIQUE per quiz.</td></tr>
+      <tr><td class="field-name">points</td><td class="field-type">SMALLINT</td><td>NOT NULL, DEFAULT 1, CHECK &gt; 0</td><td class="field-notes">Points awarded for correct answer. Enables weighted questions.</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">updated_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes"></td></tr>
+    </table>
+  </div>
+
+  <pre>CREATE UNIQUE INDEX uq_question_quiz_order
+    ON courses_quizquestion (quiz_id, "order");
+
+ALTER TABLE courses_quizquestion
+    ADD CONSTRAINT chk_question_type CHECK (
+        type IN ('single_choice','multiple_choice','true_false','short_text')
+    );</pre>
+
+  <hr>
+
+  <!-- QUIZ OPTION -->
+  <h2 id="quiz-option" style="border-top:none;margin-top:0">QuizOption <span class="tag">ANSWER CHOICE</span></h2>
+  <p>Answer options for choice-based questions. Each option is marked correct or not. Multiple options can be correct (for <code>multiple_choice</code> type). For <code>true_false</code> and <code>short_text</code> types, options are unused — correctness is handled by the Assessment domain.</p>
+
+  <div class="schema-block">
+    <div class="schema-header purple-dark">
+      <h4>courses_quizoption</h4>
+      <span>Answer option for single_choice / multiple_choice / true_false</span>
+    </div>
+    <table class="schema-table">
+      <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Notes</th></tr>
+      <tr><td class="field-name">id</td><td class="field-type">UUID</td><td><span class="badge badge-pk">PK</span></td><td class="field-notes"></td></tr>
+      <tr><td class="field-name">question_id</td><td class="field-type">UUID</td><td><span class="badge badge-fk">FK</span> NOT NULL <span class="badge badge-idx">IDX</span></td><td class="field-notes">→ courses_quizquestion.id, CASCADE DELETE</td></tr>
+      <tr><td class="field-name">body</td><td class="field-type">TEXT</td><td>NOT NULL</td><td class="field-notes">Option text. e.g. "Object-Relational Mapper"</td></tr>
+      <tr><td class="field-name">is_correct</td><td class="field-type">BOOLEAN</td><td>NOT NULL</td><td class="field-notes">Marked correct. Multiple options can be correct for <code>multiple_choice</code>.</td></tr>
+      <tr><td class="field-name">order</td><td class="field-type">SMALLINT</td><td>NOT NULL, CHECK &gt; 0</td><td class="field-notes">Base display order (shuffled at runtime if <code>shuffle_options</code> = true)</td></tr>
+      <tr><td class="field-name">created_at</td><td class="field-type">TIMESTAMPTZ</td><td>NOT NULL, DEFAULT now()</td><td class="field-notes">No updated_at — options are replaced, not updated</td></tr>
+    </table>
+  </div>
+
+  <pre>CREATE UNIQUE INDEX uq_option_question_order
+    ON courses_quizoption (question_id, "order");
+
+-- For single_choice: exactly one option can be correct
+-- Enforced at application layer, not DB level (too complex for a CHECK constraint)
+-- Service method validates: len([o for o in options if o.is_correct]) == 1</pre>
+</section>
+
+<!-- ERD -->
+<section id="erd">
+  <h2>ERD Relationships <span class="tag">FULL MAP</span></h2>
+
+  <div class="erd-container">
+    <div class="erd-section">
+      <h5>Cross-Domain (real DB FK — monolith)</h5>
+      <div class="erd-row">
+        <div class="erd-box ext">accounts_user</div>
+        <div class="erd-line">──FK created_by──▶</div>
+        <div class="erd-box core">Course</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;SET NULL on delete</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">accounts_user</div>
+        <div class="erd-line">──FK user_id──────▶</div>
+        <div class="erd-box core">CourseEnrollment</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;PROTECT on delete</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box ext">accounts_user</div>
+        <div class="erd-line">──FK enrolled_by──▶</div>
+        <div class="erd-box core">CourseEnrollment</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;SET NULL on delete, NULLABLE</div>
+      </div>
+    </div>
+
+    <div class="erd-section">
+      <h5>Catalog Structure</h5>
+      <div class="erd-row">
+        <div class="erd-box content">CourseCategory</div>
+        <div class="erd-line">&nbsp;0..1 (parent) ────▶</div>
+        <div class="erd-box content">CourseCategory</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;self-referential, max 2 levels</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box content">CourseCategory</div>
+        <div class="erd-line">&nbsp;1 ────────── N▶</div>
+        <div class="erd-box core">Course</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;SET NULL on delete (nullable FK)</div>
+      </div>
+    </div>
+
+    <div class="erd-section">
+      <h5>Core Structure (DB FK with CASCADE)</h5>
+      <div class="erd-row">
+        <div class="erd-box core">Course</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box core">Module</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box core">Lesson</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box core">Course</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box sky" style="border-color:var(--sky);background:var(--sky-light);color:var(--sky)">CourseEnrollment</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;(RESTRICT delete)</div>
+      </div>
+    </div>
+
+    <div class="erd-section">
+      <h5>Lesson Components</h5>
+      <div class="erd-row">
+        <div class="erd-box core">Lesson</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box content">LessonContent</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;&nbsp;ordered by "order"</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box core">Lesson</div>
+        <div class="erd-line">&nbsp;1 ──────────── 0..1▶</div>
+        <div class="erd-box hw">LessonHomework</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;&nbsp;optional, UNIQUE(lesson_id)</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box core">Lesson</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box hw">LessonPractice</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;&nbsp;ordered by "order"</div>
+      </div>
+      <div class="erd-row" style="margin-top:6px">
+        <div class="erd-box core">Lesson</div>
+        <div class="erd-line">&nbsp;1 ──────────── 0..1▶</div>
+        <div class="erd-box quiz">LessonQuiz</div>
+        <div class="erd-line">&nbsp;&nbsp;&nbsp;&nbsp;optional, UNIQUE(lesson_id)</div>
+      </div>
+    </div>
+
+    <div class="erd-section">
+      <h5>Quiz Sub-structure</h5>
+      <div class="erd-row">
+        <div class="erd-box quiz">LessonQuiz</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box quiz">QuizQuestion</div>
+        <div class="erd-line">&nbsp;1 ──────────────── N▶</div>
+        <div class="erd-box quiz">QuizOption</div>
+      </div>
+    </div>
+
+    <div class="erd-section" style="margin-bottom:0">
+      <h5>Consumed by other domains (IDs referenced, no DB FK)</h5>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="font-size:12px;color:var(--text-muted)"><code>Lesson.id</code> → UserProgress domain</div>
+        <div style="font-size:12px;color:var(--text-muted)">·</div>
+        <div style="font-size:12px;color:var(--text-muted)"><code>LessonHomework.id</code> → Submissions domain</div>
+        <div style="font-size:12px;color:var(--text-muted)">·</div>
+        <div style="font-size:12px;color:var(--text-muted)"><code>LessonQuiz.id</code> → Assessment domain</div>
+        <div style="font-size:12px;color:var(--text-muted)">·</div>
+        <div style="font-size:12px;color:var(--text-muted)"><code>LessonPractice.id</code> → Assessment domain</div>
+        <div style="font-size:12px;color:var(--text-muted)">·</div>
+        <div style="font-size:12px;color:var(--text-muted)"><code>CourseEnrollment.id</code> → Analytics, Certificate domains</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESIGN DECISIONS -->
+<section id="decisions">
+  <h2>Design Decisions <span class="tag">RATIONALE</span></h2>
+
+  <div class="decision-grid">
+    <div class="decision-card">
+      <h4>Single LessonContent table (no table-per-type)</h4>
+      <p>A unified table with a <code>type</code> discriminator + JSONB <code>metadata</code> handles all content types. Adding a new content type (e.g., <code>interactive</code>) is a config change, not a migration. The alternative — 7 separate tables — would require 7 JOINs to load a lesson's content in order.</p>
+    </div>
+    <div class="decision-card teal">
+      <h4>UNIQUE(parent_id, order) — not gaps, not floats</h4>
+      <p>Integer ordering with a UNIQUE constraint enforces no duplicates at the DB level. Reordering is done in a transaction using a two-step swap (displace to a temp value, then set target). Simpler than floating-point order values, avoids eventual precision collapse.</p>
+    </div>
+    <div class="decision-card coral">
+      <h4>LessonHomework 1:1, LessonPractice 1:N</h4>
+      <p>One homework per lesson = cleaner student UX (one deadline, one submission per lesson). Multiple practices per lesson = pedagogically correct (several exercises build a skill). Different cardinality = different models of interaction.</p>
+    </div>
+    <div class="decision-card amber">
+      <h4>Soft delete on Course/Module/Lesson only</h4>
+      <p>Content, Homework, Practice, Quiz are children of Lesson. Soft-deleting the Lesson is sufficient to hide everything below it. Content items themselves are replaced, not archived — hard delete is safe and avoids orphaned records.</p>
+    </div>
+    <div class="decision-card sky">
+      <h4>Real DB FK while in monolith</h4>
+      <p>Both <code>accounts</code> and <code>courses</code> apps share one PostgreSQL database. Real <code>ForeignKey</code> to <code>AUTH_USER_MODEL</code> gives cascade semantics, ORM <code>select_related</code>, and DB-level integrity for free. Soft UUID references add application complexity with zero benefit in a single-DB setup. When microservices become a reality, remove FK in one migration.</p>
+    </div>
+    <div class="decision-card coral">
+      <h4>delivery_format on CourseEnrollment, not Course</h4>
+      <p>A single "Python Backend" course can have students enrolled online and offline simultaneously. Putting <code>mode</code> on <code>Course</code> would force duplicate courses — "Python Backend Online" and "Python Backend Offline" — with identical content that must be maintained in parallel. Instead, <code>Course</code> declares supported formats via boolean flags; <code>CourseEnrollment.delivery_format</code> records each student's choice.</p>
+    </div>
+    <div class="decision-card teal">
+      <h4>CourseCategory as single FK, not junction</h4>
+      <p>One course has one primary category. A junction table (<code>CourseCategoryAssignment</code>) is premature — it adds a join to every catalog query without a clear product need today. The single FK covers 95% of cases. If multi-tagging is required in the future, add the junction table; existing category_id data migrates cleanly.</p>
+    </div>
+    <div class="decision-card gray">
+      <h4>is_sequential on Course, not Module</h4>
+      <p>Sequential ordering is a course-wide decision. Having it per-module adds complexity without clear benefit — if some modules are free and some sequential, the unlock logic becomes ambiguous. Start simple: course-wide toggle. Per-module overrides are a future extension if the product needs it.</p>
+    </div>
+    <div class="decision-card">
+      <h4>pass_score and max_attempts live in LessonQuiz</h4>
+      <p>These are content configuration values set by the course author, not runtime state. They belong in the Learning Domain alongside the quiz definition. The Assessment domain reads them when creating attempts and computing pass/fail — it never writes them.</p>
+    </div>
+    <div class="decision-card teal">
+      <h4>deadline_offset_days, not deadline_date</h4>
+      <p>A relative deadline (N days after the lesson unlocks) is far more maintainable than an absolute date. If a course is re-run or a student is given a late-start exception, no homework dates need updating. The absolute deadline is computed at submission time by the Submissions domain: <code>lesson_unlocked_at + offset_days</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INDEXES -->
+<section id="indexes">
+  <h2>Indexes &amp; Constraints Summary <span class="tag">PERFORMANCE</span></h2>
+
+  <table>
+    <tr><th>Table</th><th>Index</th><th>Purpose</th></tr>
+    <tr><td><code>courses_course</code></td><td>UNIQUE <code>(slug)</code></td><td>URL routing — most frequent course lookup</td></tr>
+    <tr><td><code>courses_course</code></td><td>PARTIAL <code>(status)</code> WHERE not deleted</td><td>Catalog listing filtered by published status</td></tr>
+    <tr><td><code>courses_course</code></td><td><code>(category_id)</code> WHERE not deleted</td><td>Catalog filtered by category (hot path)</td></tr>
+    <tr><td><code>courses_coursecategory</code></td><td>UNIQUE <code>(slug)</code></td><td>URL routing for category pages</td></tr>
+    <tr><td><code>courses_coursecategory</code></td><td><code>(parent_id, order)</code> WHERE active</td><td>Sidebar/filter listing of categories in order</td></tr>
+    <tr><td><code>courses_module</code></td><td>UNIQUE <code>(course_id, order)</code> WHERE not deleted</td><td>Ordered module listing, integrity on reorder</td></tr>
+    <tr><td><code>courses_module</code></td><td>PARTIAL <code>(course_id, order)</code> WHERE published</td><td>Student-facing module list (hot path)</td></tr>
+    <tr><td><code>courses_lesson</code></td><td>UNIQUE <code>(module_id, order)</code> WHERE not deleted</td><td>Ordered lesson listing, integrity</td></tr>
+    <tr><td><code>courses_lesson</code></td><td>PARTIAL <code>(module_id, order)</code> WHERE published</td><td>Student-facing lesson list (hot path)</td></tr>
+    <tr><td><code>courses_courseenrollment</code></td><td>UNIQUE <code>(user_id, course_id)</code></td><td>Prevent duplicate enrollments</td></tr>
+    <tr><td><code>courses_courseenrollment</code></td><td><code>(user_id, status)</code></td><td>Student dashboard — active courses</td></tr>
+    <tr><td><code>courses_courseenrollment</code></td><td><code>(course_id, status)</code></td><td>Mentor/admin — students in a course</td></tr>
+    <tr><td><code>courses_lessoncontent</code></td><td>UNIQUE <code>(lesson_id, order)</code></td><td>Ordered content rendering</td></tr>
+    <tr><td><code>courses_lessoncontent</code></td><td><code>(type, lesson_id)</code></td><td>Filter content by type (e.g., list all videos)</td></tr>
+    <tr><td><code>courses_lessonhomework</code></td><td>UNIQUE <code>(lesson_id)</code></td><td>Enforce one homework per lesson</td></tr>
+    <tr><td><code>courses_lessonpractice</code></td><td>UNIQUE <code>(lesson_id, order)</code></td><td>Ordered practice items</td></tr>
+    <tr><td><code>courses_lessonquiz</code></td><td>UNIQUE <code>(lesson_id)</code></td><td>Enforce one quiz per lesson</td></tr>
+    <tr><td><code>courses_quizquestion</code></td><td>UNIQUE <code>(quiz_id, order)</code></td><td>Ordered question listing</td></tr>
+    <tr><td><code>courses_quizoption</code></td><td>UNIQUE <code>(question_id, order)</code></td><td>Ordered option listing</td></tr>
+  </table>
+
+  <div class="callout sky">
+    <strong>Partial indexes:</strong> All indexes on published/active records use <code>WHERE deleted_at IS NULL</code> or <code>WHERE is_published = TRUE</code>. This keeps index size small — deleted/draft records are excluded. Student-facing queries always filter on published state and benefit from these partial indexes automatically.
+  </div>
+</section>
+
+<!-- CROSS DOMAIN -->
+<section id="cross-domain">
+  <h2>Cross-Domain References <span class="tag">BOUNDARIES</span></h2>
+  <p>All cross-domain references within the monolith now use real DB-level <code>ForeignKey</code> constraints. The "soft UUID" pattern is reserved for when services are actually extracted.</p>
+
+  <table>
+    <tr><th>Field</th><th>References</th><th>Direction</th><th>on_delete</th></tr>
+    <tr>
+      <td><code>Course.created_by</code></td>
+      <td><code>accounts_user.id</code></td>
+      <td>Learning → Identity</td>
+      <td>SET NULL — course persists if creator account deleted</td>
+    </tr>
+    <tr>
+      <td><code>CourseEnrollment.user</code></td>
+      <td><code>accounts_user.id</code></td>
+      <td>Learning → Identity</td>
+      <td>PROTECT — handle user deletion explicitly via signal; set status=dropped then delete or anonymise</td>
+    </tr>
+    <tr>
+      <td><code>CourseEnrollment.enrolled_by</code></td>
+      <td><code>accounts_user.id</code></td>
+      <td>Learning → Identity</td>
+      <td>SET NULL — audit field; safe to nullify if enrolling admin deleted</td>
+    </tr>
+    <tr>
+      <td><code>Course.category</code></td>
+      <td><code>courses_coursecategory.id</code></td>
+      <td>Internal Learning Domain</td>
+      <td>SET NULL — course becomes uncategorised if category deleted</td>
+    </tr>
+    <tr>
+      <td><code>Lesson.id</code></td>
+      <td>Used by UserProgress domain</td>
+      <td>UserProgress → Learning</td>
+      <td>UserProgress stores lesson_id. Learning domain never writes to UserProgress.</td>
+    </tr>
+    <tr>
+      <td><code>LessonHomework.id</code></td>
+      <td>Used by Submissions domain</td>
+      <td>Submissions → Learning</td>
+      <td>Submission stores homework_id. Homework definition read-only from Submissions.</td>
+    </tr>
+    <tr>
+      <td><code>LessonQuiz.id</code>, <code>LessonPractice.id</code></td>
+      <td>Used by Assessment domain</td>
+      <td>Assessment → Learning</td>
+      <td>Assessment stores quiz/practice IDs. Quiz definition read-only from Assessment.</td>
+    </tr>
+  </table>
+</section>
+
+<!-- FUTURE EXTENSIONS -->
+<section id="future">
+  <h2>Future Extensions <span class="tag">NOT IMPLEMENTED</span></h2>
+  <p>These are identified extension points for the Learning Domain. None are implemented now. The current schema is designed to accommodate them with minimal breaking changes.</p>
+
+  <div class="future-grid">
+    <div class="future-card">
+      <h4>📋 Prerequisites</h4>
+      <p>A <code>ModulePrerequisite</code> junction table (<code>module_id</code> + <code>required_module_id</code>) would let admins define "complete Module 2 before unlocking Module 5." Currently the sequential boolean covers 95% of cases.</p>
+    </div>
+    <div class="future-card">
+      <h4>📝 Lesson Versioning</h4>
+      <p>A <code>LessonVersion</code> table with snapshots of content and metadata. Allows rollback after an edit and tracks what version each student saw. The current model has no version history.</p>
+    </div>
+    <div class="future-card">
+      <h4>🌍 Localization</h4>
+      <p>A <code>CourseTranslation</code> / <code>LessonTranslation</code> table pattern. The base table stores the primary language; translations store <code>locale</code> + translated fields. The <code>language</code> field on Course prepares for this.</p>
+    </div>
+    <div class="future-card">
+      <h4>⏰ Content Release Scheduling</h4>
+      <p>A <code>publish_at</code> TIMESTAMPTZ on Module and Lesson. Celery beat job promotes <code>is_published = false → true</code> at scheduled time. Useful for drip-release courses.</p>
+    </div>
+    <div class="future-card">
+      <h4>🔀 Learning Paths</h4>
+      <p>A <code>LearningPath</code> table with an ordered sequence of Courses. Allows "complete these 3 courses to earn the Backend Developer track" cross-course sequences.</p>
+    </div>
+    <div class="future-card">
+      <h4>🏷 Multi-Category Tagging</h4>
+      <p>A <code>CourseCategoryAssignment</code> junction table (<code>course_id</code> + <code>category_id</code>) for courses that span multiple domains (e.g., "Full Stack" in both Frontend and Backend). Current single FK covers 95% of cases; add junction only if the product confirms multi-tag need.</p>
+    </div>
+    <div class="future-card">
+      <h4>🌿 Branching Lessons</h4>
+      <p>Adaptive learning: after a LessonQuiz, route students to different lessons based on score. Requires a <code>LessonBranch</code> conditional routing table. Complex; deferred until product confirms need.</p>
+    </div>
+    <div class="future-card">
+      <h4>👥 Co-authoring</h4>
+      <p>A <code>CourseAuthor</code> junction table to allow multiple staff members to edit the same course. Currently only <code>created_by_id</code> is tracked.</p>
+    </div>
+    <div class="future-card">
+      <h4>✅ Content Approval Workflow</h4>
+      <p>A <code>review_status</code> field on LessonContent with states <code>draft → in_review → approved</code>. Required when content is created by contractors or external instructors who need editorial sign-off before publishing.</p>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <strong>Design principle applied:</strong> Every future extension above can be added as a new table or a new nullable column — none require changing the primary keys, relationships, or constraints of the current schema. This is the mark of a well-normalized foundation.
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+"""
+Storage infrastructure — S3-compatible file storage.
+"""
+from .s3_client import S3Client, get_s3_client
+
+__all__ = ['S3Client', 'get_s3_client']

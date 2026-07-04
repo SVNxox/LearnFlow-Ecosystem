@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnFlow — Application Layer Design</title>
+<style>
+  :root {
+    --accent:
+    --accent-light:
+    --accent-mid:
+    --teal:
+    --teal-light:
+    --coral:
+    --coral-light:
+    --amber:
+    --amber-light:
+    --sky:
+    --sky-light:
+    --gray:
+    --gray-light:
+    --text:
+    --text-muted:
+    --border:
+    --bg:
+    --bg-page:
+    --code-bg:
+    --green:
+    --green-light:
+    --red:
+    --red-light:
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system,'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.7; color:var(--text); background:var(--bg-page); }
+  .layout { display:flex; min-height:100vh; }
+
+  nav {
+    width:264px; min-width:264px; background:var(--bg);
+    border-right:1px solid var(--border); padding:24px 0;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  nav .logo { padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  nav .logo h1 { font-size:15px; font-weight:600; color:var(--accent); }
+  nav .logo p { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  nav a { display:block; padding:7px 20px; font-size:13px; color:var(--text-muted); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; }
+  nav a:hover { color:var(--accent); background:var(--accent-light); border-left-color:var(--accent); }
+  nav .section-label { padding:14px 20px 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); }
+  nav a.sub { padding-left:32px; font-size:12px; }
+
+  main { flex:1; padding:48px 56px; max-width:1040px; }
+  section { margin-bottom:64px; }
+
+  h2 { font-size:26px; font-weight:600; color:var(--text); margin-bottom:8px; padding-bottom:12px; border-bottom:2px solid var(--accent-light); }
+  h2 .tag { display:inline-block; font-size:11px; font-weight:500; background:var(--accent-light); color:var(--accent); padding:2px 8px; border-radius:4px; margin-left:10px; vertical-align:middle; letter-spacing:0.05em; }
+  h3 { font-size:17px; font-weight:600; color:var(--text); margin:28px 0 12px; }
+  h4 { font-size:14px; font-weight:600; color:var(--text); margin:16px 0 6px; }
+  p { margin-bottom:12px; color:var(--text-muted); font-size:14px; }
+
+  pre { background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:16px 18px; font-family:'SF Mono','Fira Code','Cascadia Code',monospace; font-size:12.5px; line-height:1.65; overflow-x:auto; margin:12px 0; color:var(--text); }
+  code { background:var(--code-bg); font-family:'SF Mono','Fira Code',monospace; font-size:12px; padding:1px 5px; border-radius:3px; color:var(--accent); }
+
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+  th { background:var(--gray-light); font-weight:600; text-align:left; padding:9px 13px; border-bottom:2px solid var(--border); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  td { padding:8px 13px; border-bottom:1px solid var(--border); vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:none; }
+  td code { font-size:11.5px; }
+
+  .callout { border-left:3px solid var(--accent); background:var(--accent-light); border-radius:0 8px 8px 0; padding:13px 16px; margin:14px 0; font-size:13.5px; color:var(--text); }
+  .callout.warning { border-color:var(--amber); background:var(--amber-light); }
+  .callout.success { border-color:var(--teal); background:var(--teal-light); }
+  .callout.sky { border-color:var(--sky); background:var(--sky-light); }
+  .callout.coral { border-color:var(--coral); background:var(--coral-light); }
+
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; letter-spacing:0.05em; text-transform:uppercase; }
+  .badge-get    { background:
+  .badge-post   { background:var(--teal-light); color:var(--teal); }
+  .badge-patch  { background:var(--amber-light); color:var(--amber); }
+  .badge-delete { background:var(--coral-light); color:var(--coral); }
+  .badge-yes    { background:var(--green-light); color:var(--green); }
+  .badge-no     { background:var(--red-light); color:var(--red); }
+  .badge-own    { background:var(--amber-light); color:var(--amber); }
+  .badge-tag    { background:var(--accent-light); color:var(--accent); }
+
+  /* Use case grid */
+  .uc-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:16px 0; }
+  .uc-group { background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .uc-group-header { padding:8px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; }
+  .uc-group-header.accent { background:var(--accent); color:white; }
+  .uc-group-header.teal   { background:var(--teal);   color:white; }
+  .uc-group-header.sky    { background:var(--sky);    color:white; }
+  .uc-group-header.amber  { background:var(--amber);  color:white; }
+  .uc-group-header.coral  { background:var(--coral);  color:white; }
+  .uc-group-header.gray   { background:var(--gray);   color:white; }
+  .uc-item { padding:6px 14px; font-size:12.5px; color:var(--text-muted); border-bottom:1px dashed
+  .uc-item:last-child { border-bottom:none; }
+  .uc-num { font-size:10px; color:var(--text-muted); background:var(--gray-light); border-radius:3px; padding:1px 5px; font-family:monospace; min-width:28px; text-align:center; }
+
+  /* Selector / Service blocks */
+  .service-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+  .service-header { padding:11px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .service-header.accent { background:var(--accent); }
+  .service-header.teal   { background:var(--teal); }
+  .service-header.sky    { background:var(--sky); }
+  .service-header.amber  { background:var(--amber); }
+  .service-header.coral  { background:var(--coral); }
+  .service-header.gray   { background:var(--gray); }
+  .service-header h4 { margin:0; font-size:14px; font-weight:700; color:white; font-family:'SF Mono',monospace; }
+  .service-header span { font-size:11px; color:rgba(255,255,255,0.7); }
+  .service-body { padding:16px 18px; }
+  .service-body h5 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin:14px 0 6px; }
+  .service-body h5:first-child { margin-top:0; }
+  .method-row { display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px dashed
+  .method-row:last-child { border-bottom:none; }
+  .method-name { font-family:'SF Mono',monospace; font-size:12px; font-weight:600; color:var(--accent); min-width:220px; white-space:nowrap; }
+  .method-desc { color:var(--text-muted); font-size:12.5px; }
+
+  /* API endpoint blocks */
+  .endpoint-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:16px; overflow:hidden; }
+  .endpoint-header { padding:10px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); background:var(--gray-light); }
+  .endpoint-path { font-family:'SF Mono',monospace; font-size:13px; font-weight:600; color:var(--text); }
+  .endpoint-body { padding:14px 16px; display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:12.5px; }
+  .endpoint-col h6 { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px; }
+  .endpoint-col pre { margin:0; font-size:11.5px; }
+
+  /* Permissions matrix */
+  .perm-table th { font-size:11px; }
+  .perm-table td { text-align:center; vertical-align:middle; }
+  .perm-table td:first-child { text-align:left; font-size:12.5px; }
+  .perm-yes    { color:var(--green); font-size:16px; }
+  .perm-no     { color:
+  .perm-own    { color:var(--amber); font-size:13px; font-weight:700; }
+  .perm-review { color:var(--sky); font-size:13px; font-weight:700; }
+
+  /* Domain events */
+  .event-block { background:var(--bg); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+  .event-header { background:var(--accent); padding:9px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .event-header.teal  { background:var(--teal); }
+  .event-header.sky   { background:var(--sky); }
+  .event-header.amber { background:var(--amber); }
+  .event-header.coral { background:var(--coral); }
+  .event-header.gray  { background:var(--gray); }
+  .event-header h4 { margin:0; font-size:13px; font-weight:700; color:white; font-family:'SF Mono',monospace; }
+  .event-header span { font-size:11px; color:rgba(255,255,255,0.7); }
+  .event-body { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:0; }
+  .event-col { padding:12px 14px; border-right:1px solid var(--border); font-size:12.5px; }
+  .event-col:last-child { border-right:none; }
+  .event-col h6 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px; }
+  .event-col ul { list-style:none; padding:0; }
+  .event-col ul li { color:var(--text-muted); padding:2px 0; font-size:12px; }
+  .event-col ul li::before { content:"→ "; color:var(--accent); }
+
+  /* Dependency cards */
+  .dep-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+  .dep-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px 16px; border-left:4px solid var(--accent); }
+  .dep-card.blocking { border-left-color:var(--coral); }
+  .dep-card.advisory { border-left-color:var(--amber); }
+  .dep-card.design   { border-left-color:var(--sky); }
+  .dep-card h4 { margin-top:0; font-size:13px; }
+  .dep-card.blocking h4 { color:var(--coral); }
+  .dep-card.advisory h4 { color:var(--amber); }
+  .dep-card.design h4   { color:var(--sky); }
+  .dep-card p { font-size:12px; margin-bottom:0; }
+
+  hr { border:none; border-top:1px solid var(--border); margin:28px 0; }
+
+  @media (max-width:1100px) { nav { display:none; } main { padding:24px 20px; } }
+  @media (max-width:800px) { .uc-grid { grid-template-columns:1fr 1fr; } .event-body { grid-template-columns:1fr; } .endpoint-body { grid-template-columns:1fr; } .dep-grid { grid-template-columns:1fr; } }
+  @media (max-width:600px) { .uc-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav>
+  <div class="logo">
+    <h1>Application Layer</h1>
+    <p>LearnFlow — Learning Domain v1.0</p>
+  </div>
+  <div class="section-label">Overview</div>
+  <a href="
+  <div class="section-label">Read Layer</div>
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Write Layer</div>
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">API</div>
+  <a href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <a class="sub" href="
+  <div class="section-label">Governance</div>
+  <a href="
+  <a href="
+  <a href="
+</nav>
+
+<main>
+
+<!-- =================== USE CASES =================== -->
+<section id="usecases">
+  <h2>Use Cases <span class="tag">SECTION 1</span></h2>
+  <p>All business actions the Learning Domain must support, grouped by actor and concern. These drive every selector, service, and API endpoint in this document.</p>
+
+  <div class="uc-grid">
+
+    <div class="uc-group">
+      <div class="uc-group-header accent">🏷 Catalog (Public)</div>
+      <div class="uc-item"><span class="uc-num">UC-01</span> List all published courses</div>
+      <div class="uc-item"><span class="uc-num">UC-02</span> Filter courses by category</div>
+      <div class="uc-item"><span class="uc-num">UC-03</span> Filter courses by delivery format</div>
+      <div class="uc-item"><span class="uc-num">UC-04</span> View course detail (public)</div>
+      <div class="uc-item"><span class="uc-num">UC-05</span> View free-preview lesson</div>
+      <div class="uc-item"><span class="uc-num">UC-06</span> List all categories</div>
+      <div class="uc-item"><span class="uc-num">UC-07</span> Search courses by keyword</div>
+    </div>
+
+    <div class="uc-group">
+      <div class="uc-group-header sky">🎓 Student Learning</div>
+      <div class="uc-item"><span class="uc-num">UC-08</span> Enroll in a course</div>
+      <div class="uc-item"><span class="uc-num">UC-09</span> View my enrolled courses</div>
+      <div class="uc-item"><span class="uc-num">UC-10</span> View course curriculum</div>
+      <div class="uc-item"><span class="uc-num">UC-11</span> View lesson content</div>
+      <div class="uc-item"><span class="uc-num">UC-12</span> View lesson homework definition</div>
+      <div class="uc-item"><span class="uc-num">UC-13</span> View practice exercises</div>
+      <div class="uc-item"><span class="uc-num">UC-14</span> View lesson quiz definition</div>
+      <div class="uc-item"><span class="uc-num">UC-15</span> Drop a course</div>
+    </div>
+
+    <div class="uc-group">
+      <div class="uc-group-header teal">📦 Course Authoring</div>
+      <div class="uc-item"><span class="uc-num">UC-16</span> Create a course</div>
+      <div class="uc-item"><span class="uc-num">UC-17</span> Edit course metadata</div>
+      <div class="uc-item"><span class="uc-num">UC-18</span> Publish a course</div>
+      <div class="uc-item"><span class="uc-num">UC-19</span> Archive a course</div>
+      <div class="uc-item"><span class="uc-num">UC-20</span> Delete a course (soft)</div>
+      <div class="uc-item"><span class="uc-num">UC-21</span> Create a module</div>
+      <div class="uc-item"><span class="uc-num">UC-22</span> Edit module metadata</div>
+      <div class="uc-item"><span class="uc-num">UC-23</span> Publish / unpublish module</div>
+      <div class="uc-item"><span class="uc-num">UC-24</span> Reorder modules</div>
+      <div class="uc-item"><span class="uc-num">UC-25</span> Delete module (soft)</div>
+    </div>
+
+    <div class="uc-group">
+      <div class="uc-group-header amber">📝 Lesson Authoring</div>
+      <div class="uc-item"><span class="uc-num">UC-26</span> Create a lesson</div>
+      <div class="uc-item"><span class="uc-num">UC-27</span> Edit lesson metadata</div>
+      <div class="uc-item"><span class="uc-num">UC-28</span> Publish / unpublish lesson</div>
+      <div class="uc-item"><span class="uc-num">UC-29</span> Reorder lessons within a module</div>
+      <div class="uc-item"><span class="uc-num">UC-30</span> Delete lesson (soft)</div>
+      <div class="uc-item"><span class="uc-num">UC-31</span> Add content item to lesson</div>
+      <div class="uc-item"><span class="uc-num">UC-32</span> Edit content item</div>
+      <div class="uc-item"><span class="uc-num">UC-33</span> Reorder content items</div>
+      <div class="uc-item"><span class="uc-num">UC-34</span> Delete content item</div>
+      <div class="uc-item"><span class="uc-num">UC-35</span> Set / replace lesson homework</div>
+      <div class="uc-item"><span class="uc-num">UC-36</span> Edit homework definition</div>
+      <div class="uc-item"><span class="uc-num">UC-37</span> Remove homework from lesson</div>
+    </div>
+
+    <div class="uc-group">
+      <div class="uc-group-header coral">✅ Quiz &amp; Practice</div>
+      <div class="uc-item"><span class="uc-num">UC-38</span> Add practice item to lesson</div>
+      <div class="uc-item"><span class="uc-num">UC-39</span> Edit practice item</div>
+      <div class="uc-item"><span class="uc-num">UC-40</span> Reorder practice items</div>
+      <div class="uc-item"><span class="uc-num">UC-41</span> Delete practice item</div>
+      <div class="uc-item"><span class="uc-num">UC-42</span> Create lesson quiz</div>
+      <div class="uc-item"><span class="uc-num">UC-43</span> Edit quiz settings</div>
+      <div class="uc-item"><span class="uc-num">UC-44</span> Add question to quiz</div>
+      <div class="uc-item"><span class="uc-num">UC-45</span> Edit question</div>
+      <div class="uc-item"><span class="uc-num">UC-46</span> Reorder questions</div>
+      <div class="uc-item"><span class="uc-num">UC-47</span> Add option to question</div>
+      <div class="uc-item"><span class="uc-num">UC-48</span> Delete quiz</div>
+    </div>
+
+    <div class="uc-group">
+      <div class="uc-group-header gray">⚙️ Admin &amp; Ops</div>
+      <div class="uc-item"><span class="uc-num">UC-49</span> Create course category</div>
+      <div class="uc-item"><span class="uc-num">UC-50</span> Edit / reorder category</div>
+      <div class="uc-item"><span class="uc-num">UC-51</span> Deactivate category</div>
+      <div class="uc-item"><span class="uc-num">UC-52</span> Enroll student (admin)</div>
+      <div class="uc-item"><span class="uc-num">UC-53</span> Change student delivery format</div>
+      <div class="uc-item"><span class="uc-num">UC-54</span> View all enrollments (course)</div>
+      <div class="uc-item"><span class="uc-num">UC-55</span> Force-drop student enrollment</div>
+      <div class="uc-item"><span class="uc-num">UC-56</span> View unpublished draft content</div>
+    </div>
+
+  </div>
+
+  <div class="callout sky">
+    <strong>Scope boundary:</strong> These use cases cover <em>content definition and enrollment creation only</em>. Tracking progress (UC-11 only returns the lesson definition, not the student's position), submitting homework, attempting quizzes, and issuing certificates are handled by separate domains that consume Learning Domain IDs.
+  </div>
+</section>
+
+<!-- =================== SELECTORS =================== -->
+<section id="selectors">
+  <h2>Selectors — Read Layer <span class="tag">SECTION 2</span></h2>
+  <p>Selectors are the <strong>only</strong> sanctioned way to read Learning Domain data. They own query optimisation (select_related, prefetch_related, annotations), caching strategy, and visibility rules. Views and other services never query models directly.</p>
+
+  <div class="callout">
+    <strong>Design rule:</strong> Selectors return querysets or plain Python objects (dataclasses / dicts). They never mutate data. They accept <code>user</code> as a parameter and apply visibility filters internally — callers never pass <code>is_published=True</code> themselves.
+  </div>
+
+  <hr>
+
+  <h3 id="sel-catalog">CourseCatalogSelector</h3>
+  <p>Handles all public-facing catalog queries. The hot read path — must be cheap and cacheable.</p>
+  <div class="service-block">
+    <div class="service-header teal">
+      <h4>CourseCatalogSelector</h4>
+      <span>Public catalog · fast, filterable, cacheable</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_published_courses(filters, user)</span>
+        <span class="method-desc">Returns published, non-deleted courses. Applies category/format filters. Annotates with <code>enrolled_count</code>, <code>module_count</code>. Respects <code>supports_online</code>/<code>supports_offline</code> filter if requested.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_course_card(slug)</span>
+        <span class="method-desc">Lightweight single-course read for catalog card. Returns title, short_description, thumbnail, category, estimated_weeks, supports_* flags.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_all_categories()</span>
+        <span class="method-desc">Returns active categories ordered by parent/order. Includes <code>course_count</code> annotation per category.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">search_courses(query, user)</span>
+        <span class="method-desc">Full-text search on title + description. Returns published courses only. In Phase 1: icontains. Phase 2: pg_search / trigram index.</span>
+      </div>
+      <h5>Inputs</h5>
+      <div class="method-row">
+        <span class="method-name">filters</span>
+        <span class="method-desc"><code>category_slug</code>, <code>delivery_format</code> (<code>online|offline</code>), <code>language</code>, <code>page</code>, <code>page_size</code></span>
+      </div>
+      <h5>Outputs</h5>
+      <div class="method-row">
+        <span class="method-name">Queryset / list</span>
+        <span class="method-desc">Annotated Course queryset. Never exposes <code>deleted_at</code>, draft courses, or unpublished modules to unauthenticated callers.</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3 id="sel-course">CourseDetailSelector</h3>
+  <p>Full course detail reads used by enrolled students, staff, and course authors. Visibility rules are stricter than the catalog.</p>
+  <div class="service-block">
+    <div class="service-header accent">
+      <h4>CourseDetailSelector</h4>
+      <span>Full course structure · visibility-aware</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_course_detail(course_id, user)</span>
+        <span class="method-desc">Returns full course + modules + lessons (metadata only, no content). Staff/author sees unpublished. Student sees published-only. Raises <code>NotFound</code> if deleted.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_course_for_author(course_id, user)</span>
+        <span class="method-desc">Admin/Staff view. Returns all drafts and unpublished items. Raises <code>PermissionDenied</code> if user is not staff or <code>created_by</code>.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_modules_for_course(course_id, user)</span>
+        <span class="method-desc">Returns ordered, visible modules for a course. Applies published filter based on role.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_course_by_slug(slug, user)</span>
+        <span class="method-desc">Slug-based lookup used by public URLs. Raises <code>NotFound</code> for unpublished (unless staff).</span>
+      </div>
+      <h5>Visibility Rules</h5>
+      <div class="method-row">
+        <span class="method-name">Unauthenticated</span>
+        <span class="method-desc">Published courses only. Free-preview lessons only.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">Student (enrolled)</span>
+        <span class="method-desc">Published content only. No drafts.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">Staff / Admin</span>
+        <span class="method-desc">All statuses including draft and unpublished.</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3 id="sel-lesson">LessonSelector</h3>
+  <p>Lesson-level reads including all child components. Used when a student opens a lesson or a staff member edits it.</p>
+  <div class="service-block">
+    <div class="service-header amber">
+      <h4>LessonSelector</h4>
+      <span>Lesson + content + homework + practice + quiz</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_lesson_detail(lesson_id, user)</span>
+        <span class="method-desc">Returns lesson + all components. Checks enrollment or staff status. Raises <code>PermissionDenied</code> if not enrolled (unless free_preview).</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_lesson_content(lesson_id, user)</span>
+        <span class="method-desc">Returns ordered <code>LessonContent</code> items. Enforces enrollment check. Used by UserProgress domain to build the completion checklist.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_lesson_homework(lesson_id, user)</span>
+        <span class="method-desc">Returns <code>LessonHomework</code> definition or <code>None</code>. Submissions domain calls this to get deadline_offset_days, max_score, allowed_file_types.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_lesson_practice(lesson_id, user)</span>
+        <span class="method-desc">Returns ordered <code>LessonPractice</code> items. Assessment domain calls this to seed attempt context.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_lessons_for_module(module_id, user)</span>
+        <span class="method-desc">Ordered lesson list for a module. Excludes soft-deleted. Applies published filter by role.</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3 id="sel-enrollment">EnrollmentSelector</h3>
+  <p>Enrollment reads used by both the Learning domain itself and by UserProgress/Analytics domains.</p>
+  <div class="service-block">
+    <div class="service-header sky">
+      <h4>EnrollmentSelector</h4>
+      <span>Enrollment state reads</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_enrollment(user_id, course_id)</span>
+        <span class="method-desc">Returns single <code>CourseEnrollment</code> or <code>None</code>. Core existence check used by permission guards and other domains.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_enrollments_for_user(user_id, status)</span>
+        <span class="method-desc">All enrollments for a student. Optional status filter. Returns with course title + thumbnail for dashboard rendering.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_enrollments_for_course(course_id, status)</span>
+        <span class="method-desc">All student enrollments in a course. Used by mentor/admin views. Paginated.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">is_enrolled(user_id, course_id)</span>
+        <span class="method-desc">Fast boolean check. Returns <code>True</code> only for <code>status=active</code>. Used in permission guards throughout. Cached per request.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_active_enrollment_count(course_id)</span>
+        <span class="method-desc">Integer count for course detail display. Cached with short TTL.</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3 id="sel-quiz">QuizSelector</h3>
+  <p>Quiz structure reads used by the Assessment domain when creating attempts. The Learning domain only defines the quiz; Assessment records attempts.</p>
+  <div class="service-block">
+    <div class="service-header coral">
+      <h4>QuizSelector</h4>
+      <span>Quiz definition reads · consumed by Assessment domain</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row">
+        <span class="method-name">get_quiz_with_questions(quiz_id)</span>
+        <span class="method-desc">Returns <code>LessonQuiz</code> + ordered <code>QuizQuestion</code> list + <code>QuizOption</code> per question. Used by Assessment when seeding an attempt. Options are NOT marked correct — Assessment uses separate read.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_quiz_answer_key(quiz_id)</span>
+        <span class="method-desc">Returns <code>QuizOption.is_correct</code> per question. Restricted: Assessment domain only, never exposed to students directly. Permission check required.</span>
+      </div>
+      <div class="method-row">
+        <span class="method-name">get_quiz_config(quiz_id)</span>
+        <span class="method-desc">Returns <code>pass_score</code>, <code>max_attempts</code>, <code>time_limit_minutes</code>, <code>shuffle_*</code> flags. Assessment reads these when initialising attempt rules.</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- =================== SERVICES =================== -->
+<section id="services">
+  <h2>Services — Write Layer <span class="tag">SECTION 3</span></h2>
+  <p>Services own all state mutations. Each service encapsulates one aggregate's business rules. <strong>No view or task should write to models directly</strong> — all writes go through a service method. Services emit domain events after successful commits.</p>
+
+  <div class="callout warning">
+    <strong>Transaction rule:</strong> Every service method that mutates data runs inside <code>transaction.atomic()</code>. Domain events are dispatched <em>after</em> the transaction commits — never inside it (to avoid consumers reading partially-committed state).
+  </div>
+
+  <hr>
+
+  <div id="svc-category" class="service-block">
+    <div class="service-header gray">
+      <h4>CourseCategoryService</h4>
+      <span>Catalog taxonomy management</span>
+    </div>
+    <div class="service-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Manages the course category hierarchy. Admin-only. Validates hierarchy depth and slug uniqueness.</p>
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">create_category(data, actor)</span><span class="method-desc">Creates root or subcategory. Validates: parent exists if given; parent is not itself a subcategory (max depth=2); slug is globally unique.</span></div>
+      <div class="method-row"><span class="method-name">update_category(category_id, data, actor)</span><span class="method-desc">Updates name, description, icon, order, is_active. Slug is immutable after creation.</span></div>
+      <div class="method-row"><span class="method-name">deactivate_category(category_id, actor)</span><span class="method-desc">Sets <code>is_active=False</code>. Courses keep their <code>category_id</code> — they are not orphaned.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-CAT-01</span><span class="method-desc">Max 2 hierarchy levels. If <code>parent_id</code> is provided, parent must have <code>parent_id=NULL</code>.</span></div>
+      <div class="method-row"><span class="method-name">BR-CAT-02</span><span class="method-desc">Slug is immutable once created. Changing it would break URLs and cached references.</span></div>
+      <div class="method-row"><span class="method-name">BR-CAT-03</span><span class="method-desc">Deactivating a category with active children deactivates children too.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">CategoryCreated</span><span class="method-desc">category_id, slug, name</span></div>
+    </div>
+  </div>
+
+  <div id="svc-course" class="service-block">
+    <div class="service-header accent">
+      <h4>CourseService</h4>
+      <span>Course lifecycle · the most critical service in the domain</span>
+    </div>
+    <div class="service-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Manages the full Course lifecycle: create → draft → publish → archive → delete. Enforces all invariants on the Course aggregate.</p>
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">create_course(data, actor)</span><span class="method-desc">Creates draft course. Auto-generates slug from title. Validates: supports_online OR supports_offline must be true.</span></div>
+      <div class="method-row"><span class="method-name">update_course(course_id, data, actor)</span><span class="method-desc">Updates metadata. Slug is read-only after publish. Mode flags can be changed only if no active enrollments exist for the affected format.</span></div>
+      <div class="method-row"><span class="method-name">publish_course(course_id, actor)</span><span class="method-desc">Transitions <code>draft → published</code>. Validates publish readiness (see BR below). Emits <code>CoursePublished</code>.</span></div>
+      <div class="method-row"><span class="method-name">unpublish_course(course_id, actor)</span><span class="method-desc">Transitions <code>published → draft</code>. Blocked if active enrollments exist.</span></div>
+      <div class="method-row"><span class="method-name">archive_course(course_id, actor)</span><span class="method-desc">Transitions to <code>archived</code>. No new enrollments possible. Existing students retain access.</span></div>
+      <div class="method-row"><span class="method-name">delete_course(course_id, actor)</span><span class="method-desc">Soft-delete. Sets <code>deleted_at</code>. Blocked if any <code>active</code> enrollment exists.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-CRS-01</span><span class="method-desc"><strong>Publish readiness:</strong> Course must have ≥1 published module, each published module must have ≥1 published lesson.</span></div>
+      <div class="method-row"><span class="method-name">BR-CRS-02</span><span class="method-desc">Slug is immutable once status is <code>published</code>. Pre-publish it may be updated.</span></div>
+      <div class="method-row"><span class="method-name">BR-CRS-03</span><span class="method-desc">Cannot remove <code>supports_offline=True</code> if active offline enrollments exist.</span></div>
+      <div class="method-row"><span class="method-name">BR-CRS-04</span><span class="method-desc">Cannot delete a course with any enrollment (regardless of status). Archive instead.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">CourseCreated</span><span class="method-desc">course_id, title, slug, created_by</span></div>
+      <div class="method-row"><span class="method-name">CoursePublished</span><span class="method-desc">course_id, title, slug, supports_online, supports_offline</span></div>
+      <div class="method-row"><span class="method-name">CourseArchived</span><span class="method-desc">course_id, title</span></div>
+    </div>
+  </div>
+
+  <div id="svc-module" class="service-block">
+    <div class="service-header teal">
+      <h4>ModuleService</h4>
+      <span>Module lifecycle within a course</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">create_module(course_id, data, actor)</span><span class="method-desc">Creates module. Appends to end of course order by default. Course must not be deleted.</span></div>
+      <div class="method-row"><span class="method-name">update_module(module_id, data, actor)</span><span class="method-desc">Updates title, description, estimated_hours, is_published.</span></div>
+      <div class="method-row"><span class="method-name">reorder_modules(course_id, ordered_ids, actor)</span><span class="method-desc">Accepts list of module UUIDs in desired order. Validates: all IDs belong to course; no IDs missing. Runs in single transaction using temporary order displacement.</span></div>
+      <div class="method-row"><span class="method-name">delete_module(module_id, actor)</span><span class="method-desc">Soft-delete. Cascades visibility (students can no longer see lessons). Does not delete LessonProgress records in UserProgress domain.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-MOD-01</span><span class="method-desc">Cannot publish a module with zero published lessons.</span></div>
+      <div class="method-row"><span class="method-name">BR-MOD-02</span><span class="method-desc">Reorder list must contain exactly all non-deleted module IDs for the course — no partial reorders.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">ModuleCreated</span><span class="method-desc">module_id, course_id, title, order</span></div>
+      <div class="method-row"><span class="method-name">ModulePublished</span><span class="method-desc">module_id, course_id</span></div>
+    </div>
+  </div>
+
+  <div id="svc-lesson" class="service-block">
+    <div class="service-header amber">
+      <h4>LessonService</h4>
+      <span>Lesson lifecycle within a module</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">create_lesson(module_id, data, actor)</span><span class="method-desc">Creates lesson at end of module order. Module must exist and not be deleted.</span></div>
+      <div class="method-row"><span class="method-name">update_lesson(lesson_id, data, actor)</span><span class="method-desc">Updates title, description, estimated_minutes, is_free_preview.</span></div>
+      <div class="method-row"><span class="method-name">publish_lesson(lesson_id, actor)</span><span class="method-desc">Sets <code>is_published=True</code>. Lesson must have ≥1 content item OR ≥1 component (homework/practice/quiz).</span></div>
+      <div class="method-row"><span class="method-name">unpublish_lesson(lesson_id, actor)</span><span class="method-desc">Sets <code>is_published=False</code>. Checks if parent module will become empty — if so, unpublishes module and warns.</span></div>
+      <div class="method-row"><span class="method-name">reorder_lessons(module_id, ordered_ids, actor)</span><span class="method-desc">Same pattern as ModuleService.reorder_modules. All non-deleted lesson IDs required.</span></div>
+      <div class="method-row"><span class="method-name">delete_lesson(lesson_id, actor)</span><span class="method-desc">Soft-delete. Blocked if UserProgress domain has <code>completed</code> records for this lesson (checked via service call). Staff can force-delete.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-LES-01</span><span class="method-desc">Cannot publish an empty lesson (no content and no components).</span></div>
+      <div class="method-row"><span class="method-name">BR-LES-02</span><span class="method-desc">Soft-deleting a lesson does not delete UserProgress records — those are preserved for analytics.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">LessonCreated</span><span class="method-desc">lesson_id, module_id, course_id, title</span></div>
+      <div class="method-row"><span class="method-name">LessonPublished</span><span class="method-desc">lesson_id, module_id, course_id</span></div>
+      <div class="method-row"><span class="method-name">LessonDeleted</span><span class="method-desc">lesson_id, module_id, course_id</span></div>
+    </div>
+  </div>
+
+  <div id="svc-content" class="service-block">
+    <div class="service-header teal">
+      <h4>LessonContentService</h4>
+      <span>Content items within a lesson</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">add_content(lesson_id, data, actor)</span><span class="method-desc">Appends content item. Validates type-specific required fields (e.g. url required for video; body required for text). Appends to current max order + 1.</span></div>
+      <div class="method-row"><span class="method-name">update_content(content_id, data, actor)</span><span class="method-desc">Updates fields. Type is immutable after creation — content must be deleted and re-added to change type.</span></div>
+      <div class="method-row"><span class="method-name">reorder_content(lesson_id, ordered_ids, actor)</span><span class="method-desc">Standard reorder pattern.</span></div>
+      <div class="method-row"><span class="method-name">delete_content(content_id, actor)</span><span class="method-desc">Hard delete (content items are replaced, not archived). If UserProgress has viewed this item, those records are preserved but the content_id becomes a dangling reference — acceptable.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-CNT-01</span><span class="method-desc">At least one of <code>url</code> or <code>body</code> must be present. Enforced at service + DB level.</span></div>
+      <div class="method-row"><span class="method-name">BR-CNT-02</span><span class="method-desc">Content type is immutable after creation.</span></div>
+    </div>
+  </div>
+
+  <div id="svc-homework" class="service-block">
+    <div class="service-header amber">
+      <h4>LessonHomeworkService</h4>
+      <span>1:1 homework definition per lesson</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">set_homework(lesson_id, data, actor)</span><span class="method-desc">Creates or replaces homework definition. Upsert pattern — if homework exists, update it; if not, create it.</span></div>
+      <div class="method-row"><span class="method-name">remove_homework(lesson_id, actor)</span><span class="method-desc">Hard-deletes homework definition. Blocked if Submissions domain has any submission against this homework_id. Returns error with submission count.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-HW-01</span><span class="method-desc">Only one homework per lesson. Enforced at DB (UNIQUE) and service layer.</span></div>
+      <div class="method-row"><span class="method-name">BR-HW-02</span><span class="method-desc">Cannot remove homework with existing student submissions. Submissions domain must be consulted.</span></div>
+    </div>
+  </div>
+
+  <div id="svc-practice" class="service-block">
+    <div class="service-header amber">
+      <h4>LessonPracticeService</h4>
+      <span>Ordered practice exercises within a lesson</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">add_practice(lesson_id, data, actor)</span><span class="method-desc">Appends practice item. Validates type (coding/written/interactive) and required fields per type.</span></div>
+      <div class="method-row"><span class="method-name">update_practice(practice_id, data, actor)</span><span class="method-desc">Updates instructions, hints, max_score, time_limit_minutes. Type is immutable.</span></div>
+      <div class="method-row"><span class="method-name">reorder_practice(lesson_id, ordered_ids, actor)</span><span class="method-desc">Standard reorder pattern.</span></div>
+      <div class="method-row"><span class="method-name">delete_practice(practice_id, actor)</span><span class="method-desc">Hard delete. Blocked if Assessment domain has attempts against this practice_id.</span></div>
+    </div>
+  </div>
+
+  <div id="svc-quiz" class="service-block">
+    <div class="service-header coral">
+      <h4>LessonQuizService</h4>
+      <span>Quiz definition: settings, questions, options</span>
+    </div>
+    <div class="service-body">
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">create_quiz(lesson_id, data, actor)</span><span class="method-desc">Creates quiz for lesson. Blocked if quiz already exists (1:1 enforced).</span></div>
+      <div class="method-row"><span class="method-name">update_quiz_settings(quiz_id, data, actor)</span><span class="method-desc">Updates pass_score, max_attempts, time_limit, shuffle flags, show_correct_after_attempt.</span></div>
+      <div class="method-row"><span class="method-name">add_question(quiz_id, data, actor)</span><span class="method-desc">Appends question. Validates type. For single_choice, at least one correct option required. For short_text, no options needed.</span></div>
+      <div class="method-row"><span class="method-name">update_question(question_id, data, actor)</span><span class="method-desc">Updates body, explanation, points. Type is immutable after creation.</span></div>
+      <div class="method-row"><span class="method-name">reorder_questions(quiz_id, ordered_ids, actor)</span><span class="method-desc">Standard reorder pattern.</span></div>
+      <div class="method-row"><span class="method-name">add_option(question_id, data, actor)</span><span class="method-desc">Adds answer option. Validates: for single_choice, only one option may be marked correct.</span></div>
+      <div class="method-row"><span class="method-name">delete_quiz(quiz_id, actor)</span><span class="method-desc">Hard-deletes quiz + questions + options. Blocked if Assessment domain has attempts. Staff can force-delete.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-QZ-01</span><span class="method-desc"><code>pass_score</code> must be 0–100 inclusive.</span></div>
+      <div class="method-row"><span class="method-name">BR-QZ-02</span><span class="method-desc"><code>single_choice</code> question must have exactly one correct option.</span></div>
+      <div class="method-row"><span class="method-name">BR-QZ-03</span><span class="method-desc"><code>multiple_choice</code> question must have ≥2 options with ≥1 correct.</span></div>
+      <div class="method-row"><span class="method-name">BR-QZ-04</span><span class="method-desc">Question type is immutable — delete and recreate if type change needed.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">QuizCreated</span><span class="method-desc">quiz_id, lesson_id, course_id</span></div>
+    </div>
+  </div>
+
+  <div id="svc-enrollment" class="service-block">
+    <div class="service-header sky">
+      <h4>CourseEnrollmentService</h4>
+      <span>Enrollment lifecycle — the cross-domain write boundary</span>
+    </div>
+    <div class="service-body">
+      <h5>Purpose</h5>
+      <p style="margin:0 0 10px">Manages enrollment creation, status transitions, and delivery format. This service is called by students (self-enroll), admins (bulk enroll), and the future Mentorship domain (offline group enroll).</p>
+      <h5>Methods</h5>
+      <div class="method-row"><span class="method-name">enroll_student(user_id, course_id, delivery_format, actor)</span><span class="method-desc">Creates <code>CourseEnrollment</code>. Validates course is published; validates delivery_format against course.supports_*; checks no duplicate enrollment exists.</span></div>
+      <div class="method-row"><span class="method-name">drop_enrollment(enrollment_id, actor)</span><span class="method-desc">Sets <code>status=dropped</code>, stamps <code>dropped_at</code>. Actor must be the student or staff.</span></div>
+      <div class="method-row"><span class="method-name">complete_enrollment(enrollment_id, actor)</span><span class="method-desc">Sets <code>status=completed</code>, stamps <code>completed_at</code>. Called by UserProgress domain when all module assessments pass. Actor must be system or staff.</span></div>
+      <div class="method-row"><span class="method-name">change_delivery_format(enrollment_id, new_format, actor)</span><span class="method-desc">Changes online↔offline. Restricted to staff/admin. Validates new format is supported by course. Emits <code>EnrollmentDeliveryFormatChanged</code>.</span></div>
+      <h5>Business Rules</h5>
+      <div class="method-row"><span class="method-name">BR-ENR-01</span><span class="method-desc">Cannot enroll in a draft or archived course.</span></div>
+      <div class="method-row"><span class="method-name">BR-ENR-02</span><span class="method-desc">Cannot enroll with <code>delivery_format=offline</code> if <code>course.supports_offline=False</code>.</span></div>
+      <div class="method-row"><span class="method-name">BR-ENR-03</span><span class="method-desc">Duplicate enrollment (same user+course) is rejected. Return existing enrollment if status=dropped.</span></div>
+      <div class="method-row"><span class="method-name">BR-ENR-04</span><span class="method-desc">Only <code>active</code> enrollment can be completed or dropped. Already-completed enrollments are immutable.</span></div>
+      <h5>Events Produced</h5>
+      <div class="method-row"><span class="method-name">StudentEnrolled</span><span class="method-desc">enrollment_id, user_id, course_id, delivery_format, enrolled_at</span></div>
+      <div class="method-row"><span class="method-name">EnrollmentDropped</span><span class="method-desc">enrollment_id, user_id, course_id, dropped_at</span></div>
+      <div class="method-row"><span class="method-name">EnrollmentCompleted</span><span class="method-desc">enrollment_id, user_id, course_id, completed_at</span></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- =================== API CONTRACTS =================== -->
+<section id="api">
+  <h2>API Contracts <span class="tag">SECTION 4</span></h2>
+  <p>All endpoints use JSON. Auth via Bearer token (JWT). Pagination uses <code>{ count, next, previous, results }</code>. Errors use <code>{ error, code, detail }</code>. UUIDs in all ID fields.</p>
+
+  <div class="callout sky">
+    <strong>URL namespace:</strong> All Learning Domain endpoints live under <code>/api/v1/</code>. The prefix <code>learning/</code> is used in this document for clarity but may be omitted in the final router if there is no namespace collision.
+  </div>
+
+  <!-- CATALOG -->
+  <h3 id="api-catalog">Catalog Endpoints</h3>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-get">GET</span>
+      <span class="endpoint-path">/learning/courses/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Public · UC-01 UC-02 UC-03 UC-07</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Query Params</h6>
+        <pre>category_slug: string (optional)
+delivery_format: online|offline (optional)
+language: string (optional)
+search: string (optional)
+page: int (default 1)
+page_size: int (default 20, max 100)</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 200</h6>
+        <pre>{ count, next, previous,
+  results: [{
+    id, title, slug,
+    short_description,
+    thumbnail_url,
+    category: { id, name, slug },
+    supports_online, supports_offline,
+    estimated_weeks, language,
+    module_count, enrolled_count
+  }]
+}</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Public (no auth required)</div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-get">GET</span>
+      <span class="endpoint-path">/learning/courses/{slug}/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Public · UC-04 UC-10</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Path Params</h6>
+        <pre>slug: string</pre>
+        <h6>Notes</h6>
+        <pre>Staff see draft content.
+Students see published only.
+Unauthenticated: published only.</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 200</h6>
+        <pre>{ id, title, slug, description,
+  short_description, thumbnail_url,
+  status, supports_online, supports_offline,
+  language, estimated_weeks, is_sequential,
+  category: { id, name, slug },
+  created_by: { id, full_name },
+  modules: [{
+    id, title, description, order,
+    is_published, estimated_hours,
+    lesson_count
+  }]
+}</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Public for published. Staff/Admin see drafts.</div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-get">GET</span>
+      <span class="endpoint-path">/learning/categories/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Public · UC-06</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Response 200</h6>
+        <pre>[{ id, name, slug, description,
+   icon, order, course_count,
+   children: [{ id, name, slug,
+     icon, order, course_count }]
+}]</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Notes</h6>
+        <pre>Returns active categories only.
+Nested children in response.
+No pagination (expected &lt; 50 categories).
+Cacheable (TTL: 5 min).</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- COURSE MANAGEMENT -->
+  <h3 id="api-course-mgmt">Course Management</h3>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/courses/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-16</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ title: string (required),
+  description: string,
+  short_description: string,
+  thumbnail_url: string,
+  category_id: uuid,
+  supports_online: bool (default true),
+  supports_offline: bool (default false),
+  language: string (default "ru"),
+  estimated_weeks: int,
+  is_sequential: bool (default true)
+}</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201</h6>
+        <pre>{ id, title, slug, status: "draft",
+  supports_online, supports_offline,
+  created_at, created_by: { id, full_name }
+}</pre>
+        <h6>Errors</h6>
+        <pre>400: neither supports_online nor
+     supports_offline is true
+400: category_id not found</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Staff, Admin</div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-patch">PATCH</span>
+      <span class="endpoint-path">/learning/courses/{id}/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-17</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body (partial)</h6>
+        <pre>{ title, description,
+  short_description, thumbnail_url,
+  category_id, supports_online,
+  supports_offline, language,
+  estimated_weeks, is_sequential }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Notes</h6>
+        <pre>slug: immutable once published.
+supports_offline: cannot set to false
+  if active offline enrollments exist.
+Response: full course object.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/courses/{id}/publish/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-18</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col"><h6>Request Body</h6><pre>{ } (empty)</pre></div>
+      <div class="endpoint-col">
+        <h6>Response 200 / Errors</h6>
+        <pre>200: { id, status: "published", ... }
+400: { code: "publish_not_ready",
+  detail: "Course has no published modules" }
+400: { code: "publish_not_ready",
+  detail: "Module X has no published lessons" }</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/courses/{id}/archive/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Admin · UC-19</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col"><h6>Request Body</h6><pre>{ } (empty)</pre></div>
+      <div class="endpoint-col"><h6>Response 200</h6><pre>{ id, status: "archived" }</pre></div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Admin only</div>
+  </div>
+
+  <!-- COURSE STRUCTURE -->
+  <h3 id="api-structure">Course Structure (Modules &amp; Lessons)</h3>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/courses/{course_id}/modules/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-21</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ title: string (required),
+  description: string,
+  estimated_hours: int }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201</h6>
+        <pre>{ id, title, description, order,
+  is_published: false,
+  estimated_hours, created_at }</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/courses/{course_id}/modules/reorder/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-24</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col"><h6>Request Body</h6><pre>{ ordered_ids: [uuid, uuid, ...] }</pre></div>
+      <div class="endpoint-col"><h6>Response 200 / Errors</h6><pre>200: [{ id, order }, ...]
+400: "ordered_ids must include all
+  non-deleted modules for this course"</pre></div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/modules/{module_id}/lessons/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-26</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ title: string (required),
+  description: string,
+  estimated_minutes: int,
+  is_free_preview: bool (default false) }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201</h6>
+        <pre>{ id, title, description, order,
+  is_published: false,
+  is_free_preview, estimated_minutes }</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-get">GET</span>
+      <span class="endpoint-path">/learning/modules/{module_id}/lessons/{lesson_id}/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Enrolled Student / Staff · UC-11</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Response 200</h6>
+        <pre>{ id, title, description, order,
+  is_published, is_free_preview,
+  estimated_minutes,
+  content: [{ id, type, title,
+    url, body, order, duration_seconds,
+    is_required, is_downloadable,
+    metadata }],
+  homework: { id, title, description,
+    max_score, deadline_offset_days,
+    submission_type } | null,
+  practice: [{ id, title, type,
+    instructions, order }],
+  quiz: { id, title, pass_score,
+    max_attempts, time_limit_minutes,
+    question_count } | null
+}</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Notes</h6>
+        <pre>Quiz questions NOT included here.
+QuizSelector.get_quiz_with_questions
+is called by Assessment domain only.
+
+is_correct NOT exposed to students.
+
+Unauthenticated may view if
+is_free_preview = true.</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Enrolled student, Staff, Admin. Unauthenticated if <code>is_free_preview=true</code>.</div>
+  </div>
+
+  <!-- LESSON COMPONENTS -->
+  <h3 id="api-lesson">Lesson Components</h3>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/lessons/{lesson_id}/content/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-31</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ type: video|pdf|slides|text|
+        link|recording|code (required),
+  title: string (required),
+  description: string,
+  url: string (required for video/
+    pdf/slides/link/recording),
+  body: string (required for text/code),
+  duration_seconds: int,
+  file_size_bytes: int,
+  is_required: bool (default true),
+  is_downloadable: bool,
+  metadata: object }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201 / Errors</h6>
+        <pre>201: { id, type, title, order, ... }
+
+400: { code: "missing_url",
+  detail: "url required for type=video" }
+400: { code: "missing_body",
+  detail: "body required for type=text" }</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/lessons/{lesson_id}/quiz/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Staff/Admin · UC-42</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ title: string (required),
+  instructions: string,
+  time_limit_minutes: int,
+  pass_score: int (0-100, default 70),
+  max_attempts: int | null,
+  shuffle_questions: bool,
+  shuffle_options: bool,
+  show_correct_after_attempt: bool }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201 / Errors</h6>
+        <pre>201: { id, title, pass_score, ... }
+
+409: { code: "quiz_exists",
+  detail: "Lesson already has a quiz.
+  Update it via PATCH /quiz/{id}/" }</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENROLLMENT -->
+  <h3 id="api-enrollment">Enrollment</h3>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/enrollments/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student / Admin · UC-08 UC-52</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col">
+        <h6>Request Body</h6>
+        <pre>{ course_id: uuid (required),
+  delivery_format: online|offline
+    (required),
+  user_id: uuid (admin-only field;
+    omit for self-enrollment) }</pre>
+      </div>
+      <div class="endpoint-col">
+        <h6>Response 201 / Errors</h6>
+        <pre>201: { id, course_id, user_id,
+  delivery_format, status: "active",
+  enrolled_at }
+
+400: "Course does not support offline"
+400: "Course is not published"
+409: "Student already enrolled"</pre>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:12px;color:var(--text-muted)"><strong>Permissions:</strong> Authenticated student (self-enroll), Admin (any user)</div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-get">GET</span>
+      <span class="endpoint-path">/learning/enrollments/me/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student · UC-09</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col"><h6>Query Params</h6><pre>status: active|completed|dropped (optional)</pre></div>
+      <div class="endpoint-col">
+        <h6>Response 200</h6>
+        <pre>{ results: [{
+  id, delivery_format, status,
+  enrolled_at, completed_at,
+  course: { id, title, slug,
+    thumbnail_url, module_count }
+}] }</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="endpoint-block">
+    <div class="endpoint-header">
+      <span class="badge badge-post">POST</span>
+      <span class="endpoint-path">/learning/enrollments/{id}/drop/</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">Student / Admin · UC-15</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-col"><h6>Request Body</h6><pre>{ } (empty)</pre></div>
+      <div class="endpoint-col"><h6>Response 200 / Errors</h6><pre>200: { id, status: "dropped", dropped_at }
+400: "Enrollment already completed"</pre></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- =================== PERMISSIONS =================== -->
+<section id="permissions">
+  <h2>Permissions Matrix <span class="tag">SECTION 5</span></h2>
+  <p>Roles: <strong>Student</strong> — enrolled learner. <strong>Mentor</strong> — leads offline groups, reviews homework. <strong>Staff</strong> — course authors, can create and edit but not archive. <strong>Admin</strong> — full access.</p>
+
+  <div class="callout warning">
+    <strong>OWN</strong> = only for courses/content the user created. Mentors have read-only access to enrolled students' course structure; they cannot author courses.
+  </div>
+
+  <table class="perm-table">
+    <thead>
+      <tr>
+        <th style="min-width:220px">Action</th>
+        <th>Student</th>
+        <th>Mentor</th>
+        <th>Staff</th>
+        <th>Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="5" style="background:var(--accent-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent)">Catalog</td></tr>
+      <tr><td>List published courses</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View published course detail</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View free-preview lesson</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View draft / unpublished course</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View unpublished lesson content</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+
+      <tr><td colspan="5" style="background:var(--sky-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--sky)">Enrollment</td></tr>
+      <tr><td>Enroll self in course (online)</td><td class="perm-yes">✓</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Enroll self in course (offline)</td><td class="perm-yes">✓</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Enroll any student (admin)</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Drop own enrollment</td><td class="perm-yes">✓</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Force-drop student enrollment</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Change delivery format</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View all enrollments for course</td><td class="perm-no">—</td><td class="perm-review">📋 own groups</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+
+      <tr><td colspan="5" style="background:var(--teal-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal)">Course Authoring</td></tr>
+      <tr><td>Create course</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Edit course metadata</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Publish course</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Unpublish course</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Archive course</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Delete course (soft)</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+
+      <tr><td colspan="5" style="background:var(--amber-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--amber)">Module &amp; Lesson Authoring</td></tr>
+      <tr><td>Create / edit module</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Publish / unpublish module</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Reorder modules</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Create / edit lesson</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Publish / unpublish lesson</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Reorder lessons</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Delete module / lesson</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+
+      <tr><td colspan="5" style="background:var(--coral-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--coral)">Content &amp; Quiz Authoring</td></tr>
+      <tr><td>Add / edit / reorder content</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Delete content item</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Set / edit homework definition</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Remove homework definition</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Add / edit / delete practice</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Create / edit quiz + questions</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Delete quiz</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+
+      <tr><td colspan="5" style="background:var(--gray-light);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Admin</td></tr>
+      <tr><td>Create / edit category</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>Deactivate category</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-yes">✓</td></tr>
+      <tr><td>View quiz answer key</td><td class="perm-no">—</td><td class="perm-no">—</td><td class="perm-own">OWN</td><td class="perm-yes">✓</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout success" style="margin-top:16px">
+    <strong>OWN scope resolution:</strong> "OWN" checks <code>course.created_by == request.user</code>. In future, when co-authoring (<code>CourseAuthor</code> junction) is added, OWN expands to "member of course author list." No permission code changes — just the predicate function.
+  </div>
+</section>
+
+<!-- =================== DOMAIN EVENTS =================== -->
+<section id="events">
+  <h2>Domain Events <span class="tag">SECTION 6</span></h2>
+  <p>Events are dispatched after successful DB commits. In the monolith, Django signals serve as the event bus. In a future service architecture, these map 1:1 to message queue topics. Each event payload is designed to be self-contained — consumers never need to query back into the Learning domain to process the event.</p>
+
+  <div class="callout">
+    <strong>Naming convention:</strong> <code>[Entity][PastTense]</code>. All events carry <code>occurred_at: TIMESTAMPTZ</code> and <code>actor_id: UUID</code> (who triggered the action).
+  </div>
+
+  <h3>Enrollment Events</h3>
+
+  <div class="event-block">
+    <div class="event-header sky">
+      <h4>StudentEnrolled</h4>
+      <span>Produced by: CourseEnrollmentService.enroll_student</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">enrollment_id: UUID
+user_id: UUID
+course_id: UUID
+course_title: str
+delivery_format: str
+enrolled_at: TIMESTAMPTZ
+enrolled_by_id: UUID | null</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>UserProgress — initialise progress record for the course</li>
+          <li>Notifications — send welcome / enrollment confirmation</li>
+          <li>Analytics — update enrollment metrics</li>
+          <li>Mentorship — if offline, trigger group assignment flow</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">HIGH — UserProgress must receive this to initialise student state. If missed, student cannot track progress.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-header sky">
+      <h4>EnrollmentDropped</h4>
+      <span>Produced by: CourseEnrollmentService.drop_enrollment</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">enrollment_id: UUID
+user_id: UUID
+course_id: UUID
+dropped_at: TIMESTAMPTZ
+dropped_by_id: UUID</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>UserProgress — mark progress as inactive</li>
+          <li>Notifications — send drop confirmation</li>
+          <li>Mentorship — remove from offline group if assigned</li>
+          <li>Analytics — update churn metrics</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">MEDIUM — Analytics and Mentorship may handle async. UserProgress should deactivate synchronously.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-header sky">
+      <h4>EnrollmentCompleted</h4>
+      <span>Produced by: CourseEnrollmentService.complete_enrollment</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">enrollment_id: UUID
+user_id: UUID
+course_id: UUID
+completed_at: TIMESTAMPTZ</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>Certification — trigger certificate generation</li>
+          <li>Notifications — send completion congratulations</li>
+          <li>Analytics — update completion rate</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">HIGH — Certification domain listens to this event. If missed, certificate is not issued.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Course Lifecycle Events</h3>
+
+  <div class="event-block">
+    <div class="event-header accent">
+      <h4>CoursePublished</h4>
+      <span>Produced by: CourseService.publish_course</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">course_id: UUID
+title: str
+slug: str
+category_id: UUID | null
+supports_online: bool
+supports_offline: bool
+language: str
+published_at: TIMESTAMPTZ
+published_by_id: UUID</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>Search index — index course for discovery</li>
+          <li>Notifications — alert staff/students who saved course</li>
+          <li>Analytics — add to published course metrics</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">MEDIUM — Search indexing can be async. Course is live regardless of search index state.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-header gray">
+      <h4>CourseArchived</h4>
+      <span>Produced by: CourseService.archive_course</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">course_id: UUID
+title: str
+archived_at: TIMESTAMPTZ
+archived_by_id: UUID</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>Search index — remove from discovery</li>
+          <li>Notifications — notify enrolled students</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">LOW — Enrolled students retain access. Notification is advisory.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Content Events</h3>
+
+  <div class="event-block">
+    <div class="event-header teal">
+      <h4>LessonPublished</h4>
+      <span>Produced by: LessonService.publish_lesson</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">lesson_id: UUID
+module_id: UUID
+course_id: UUID
+title: str
+order: int
+published_at: TIMESTAMPTZ</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>UserProgress — unlock lesson for enrolled students if sequential rules allow</li>
+          <li>Notifications — alert enrolled students of new lesson</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">MEDIUM — UserProgress must know about new lessons to track completion correctly.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-header amber">
+      <h4>LessonDeleted</h4>
+      <span>Produced by: LessonService.delete_lesson</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">lesson_id: UUID
+module_id: UUID
+course_id: UUID
+deleted_at: TIMESTAMPTZ</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>UserProgress — mark existing progress entries as stale</li>
+          <li>Submissions — orphan check on homework submissions</li>
+          <li>Assessment — orphan check on quiz/practice attempts</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">HIGH — Other domains must handle stale references. Blocked by BR-LES-02 if completed progress exists without staff override.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-block">
+    <div class="event-header coral">
+      <h4>QuizCreated</h4>
+      <span>Produced by: LessonQuizService.create_quiz</span>
+    </div>
+    <div class="event-body">
+      <div class="event-col">
+        <h6>Payload</h6>
+        <pre style="font-size:11.5px;margin:0">quiz_id: UUID
+lesson_id: UUID
+course_id: UUID
+pass_score: int
+max_attempts: int | null</pre>
+      </div>
+      <div class="event-col">
+        <h6>Consumers</h6>
+        <ul>
+          <li>Assessment — register quiz as available for attempts</li>
+          <li>UserProgress — note that lesson now has a quiz component</li>
+        </ul>
+      </div>
+      <div class="event-col">
+        <h6>Criticality</h6>
+        <p style="font-size:12px;color:var(--text-muted)">LOW — Assessment discovers quizzes on-demand via QuizSelector. Event is advisory.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- =================== DEPENDENCIES =================== -->
+<section id="dependencies">
+  <h2>UserProgress Domain Dependencies <span class="tag">SECTION 7</span></h2>
+  <p>Before designing the UserProgress domain, these questions must be answered. They are not optional assumptions — each one changes the data model, the event contracts, or both.</p>
+
+  <div class="callout coral">
+    <strong>Blocking decisions</strong> must be resolved before any UserProgress table is designed. Advisory decisions can be deferred to the first implementation sprint but should be decided before writing service code.
+  </div>
+
+  <div class="dep-grid">
+
+    <div class="dep-card blocking">
+      <h4>🔴 What is the unit of progress?</h4>
+      <p>Does the student complete a <strong>Lesson</strong> as a whole, or are individual <strong>LessonContent items</strong> tracked? If content-level: <code>LessonContentProgress(enrollment_id, content_id, viewed_at)</code>. If lesson-level: <code>LessonProgress(enrollment_id, lesson_id, status)</code>. This determines the primary key structure of the entire UserProgress domain and what <code>LessonContent.is_required</code> means at runtime.</p>
+    </div>
+
+    <div class="dep-card blocking">
+      <h4>🔴 What unlocks the next lesson?</h4>
+      <p>Options: (A) Student views all <code>is_required</code> content items → auto-unlock. (B) Student submits homework → unlock after mentor approval. (C) Student passes lesson quiz → auto-unlock. (D) Mentor manually unlocks. This decision defines whether <code>LessonHomework</code> and <code>LessonQuiz</code> are gates or just activities. If (B) or (C): UserProgress needs to listen to Submissions and Assessment events respectively.</p>
+    </div>
+
+    <div class="dep-card blocking">
+      <h4>🔴 What unlocks the next module?</h4>
+      <p>Is it: (A) All lessons in the module completed? (B) A separate end-of-module assessment passed? (C) Both? Currently the design brief says "module assessment" but that lives in the Assessment domain. UserProgress must know whether to wait for an <code>AssessmentPassed</code> event or compute completion from lesson states alone.</p>
+    </div>
+
+    <div class="dep-card blocking">
+      <h4>🔴 Does online progress === offline progress?</h4>
+      <p>Online students self-pace through lessons. Offline students attend scheduled sessions. Does a student's <code>LessonProgress</code> get set by (A) the student opening the lesson, or (B) the mentor marking attendance for a session that covered that lesson? If (B), UserProgress depends on an <code>AttendanceMarked</code> event from the Mentorship domain. These are two fundamentally different progress architectures.</p>
+    </div>
+
+    <div class="dep-card advisory">
+      <h4>🟡 Can a student reset progress?</h4>
+      <p>If a student re-enrolls (was dropped, then re-enrolled), does previous progress carry over or reset? This affects whether <code>LessonProgress</code> is keyed by <code>enrollment_id</code> (reset on re-enroll) or <code>user_id + lesson_id</code> (persists across enrollments). The <code>CourseEnrollmentService</code> handles the re-enrollment scenario (BR-ENR-03) but does not yet define what happens to prior progress.</p>
+    </div>
+
+    <div class="dep-card advisory">
+      <h4>🟡 Who triggers EnrollmentCompleted?</h4>
+      <p>The Learning Domain's <code>CourseEnrollmentService.complete_enrollment</code> exists, but who calls it? UserProgress (when all modules pass)? Assessment (when final exam passes)? This needs a defined orchestrator. Recommendation: UserProgress domain owns course completion logic and calls <code>CourseEnrollmentService.complete_enrollment</code> as an internal service call. But this must be confirmed before UserProgress is designed.</p>
+    </div>
+
+    <div class="dep-card design">
+      <h4>🔵 Progress granularity for Analytics</h4>
+      <p>Analytics domain will want time-series data: when did the student start each lesson? How long did they spend? Are these timestamps stored in UserProgress, or does Analytics maintain its own event log? Decide whether UserProgress is the system of record for timing data or just for completion state. This affects how many columns are on <code>LessonProgress</code>.</p>
+    </div>
+
+    <div class="dep-card design">
+      <h4>🔵 Handling deleted lessons in active courses</h4>
+      <p>If a staff member soft-deletes a lesson that an enrolled student has already completed, what happens to their progress? Options: (A) Progress records preserved, lesson shown as "removed" in UI. (B) Lesson deleted + progress records deleted, completion percentage recalculated. The <code>LessonDeleted</code> event is already defined — UserProgress must declare its handler strategy before its schema is finalised.</p>
+    </div>
+
+  </div>
+
+  <div class="callout success" style="margin-top:24px">
+    <strong>What the Learning Domain already provides to UserProgress:</strong>
+    <br><br>
+    ✓ <code>StudentEnrolled</code> event — UserProgress initialises on this<br>
+    ✓ <code>LessonPublished</code> event — new lesson becomes trackable<br>
+    ✓ <code>LessonDeleted</code> event — UserProgress must handle stale references<br>
+    ✓ <code>EnrollmentDropped</code> event — UserProgress deactivates on this<br>
+    ✓ <code>EnrollmentSelector.is_enrolled()</code> — UserProgress uses this as a gate check<br>
+    ✓ <code>LessonSelector.get_lesson_content()</code> — source of truth for what must be completed<br>
+    ✓ <code>CourseEnrollmentService.complete_enrollment()</code> — UserProgress calls this when done<br>
+    ✓ <code>Course.is_sequential</code> — UserProgress reads this to decide unlock order
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

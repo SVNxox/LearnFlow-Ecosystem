@@ -1,0 +1,23 @@
+==================================================
+                  LearnFlow
+             Your code to success
+==================================================
+
+Ready for a big change, {{ full_name }}?
+
+Congratulations on taking your first step into the tech world!
+To activate your account on the LearnFlow platform and start
+mastering modern tech skills, click the link below:
+
+ Verify here: {{ token_url }}
+
+--------------------------------------------------
+⚡ Please note: For security reasons, this link is
+only valid for 1 hour.
+--------------------------------------------------
+
+If you did not sign up for a LearnFlow account, you can
+safely ignore this email. Your information is secure.
+
+Build the future with us.
+© 2026 LearnFlow Academy. All rights reserved.
