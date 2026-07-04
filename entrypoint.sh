@@ -13,17 +13,7 @@ echo "════════════════════════�
 
 
 echo "⏳ Waiting for PostgreSQL..."
-while ! python << END
-import sys
-import psycopg2
-try:
-    conn = psycopg2.connect("${DATABASE_URL}")
-    conn.close()
-except Exception as e:
-    print(f"Database not ready: {e}")
-    sys.exit(1)
-END
-do
+until python -c "import psycopg; psycopg.connect('${DATABASE_URL}').close()" 2>/dev/null; do
   echo "   Database not ready, retrying in 2s..."
   sleep 2
 done
