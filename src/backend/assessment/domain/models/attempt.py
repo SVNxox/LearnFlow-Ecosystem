@@ -139,7 +139,7 @@ class AssessmentAttempt(models.Model):
         ]
 
     def __str__(self):
-        return f"Attempt 
+        return f"Attempt {self.id} - {self.student.email} - {self.assessment.title}"
 
     def is_expired(self) -> bool:
         """Check if attempt has expired."""
