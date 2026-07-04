@@ -86,10 +86,10 @@ class AdminTemplateListCreateView(APIView):
     @staticmethod
     def _default_font_config() -> dict:
         return {
-            "title": {"family": "Inter", "size": 48, "color": "
-            "subtitle": {"family": "Inter", "size": 24, "color": "
-            "body": {"family": "Inter", "size": 16, "color": "
-            "signature": {"family": "Dancing Script", "size": 20, "color": "
+            "title": {"family": "Inter", "size": 48, "color": "#1a1a1a"},
+            "subtitle": {"family": "Inter", "size": 24, "color": "#4a4a4a"},
+            "body": {"family": "Inter", "size": 16, "color": "#6a6a6a"},
+            "signature": {"family": "Dancing Script", "size": 20, "color": "#1a1a1a"}
         }
 
     @staticmethod
